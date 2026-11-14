@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Skin Converter</title>
+
+<style>
+:root{
+  --bg:#0b0c0f; --bg2:#101216; --panel:#14161b; --panel2:#191c22; --raise:#1f232a;
+  --line:#23272f; --line2:#2f3540;
+  --text:#e9eaed; --muted:#8b919c; --dim:#5b616c;
+  --accent:#b6003c; --accent-hover:#cc0a47; --accent-ink:#ffffff; --accent-hi:#ff5c8a;
+  --accent-soft:rgba(182,0,60,.16); --accent-line:rgba(214,30,90,.62);
+  --ok:#8fd08a; --warn:#e8a65e; --err:#ef6b6b;
+  --mono:"Cascadia Code","Cascadia Mono","JetBrains Mono",Consolas,monospace;
+  --sans:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+  --title:"Cascadia Code","Cascadia Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:13px/1.45 var(--sans);overflow:hidden}
+button,input,select{font:inherit;color:inherit}
+body{display:grid;grid-template-rows:auto 1fr;padding:14px;gap:12px}
+[hidden]{display:none !important}
+
+/* ---------- header ---------- */
+.top{display:flex;align-items:center;gap:18px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px 12px 16px}
+.brand{display:flex;align-items:center;gap:12px;min-width:250px}
+.mark{width:38px;height:38px;border-radius:9px;background:linear-gradient(140deg,#e0185a,#8a002d);display:grid;place-items:center;box-shadow:0 0 0 1px #0006 inset,0 6px 18px -6px #b6003caa}
+.mark svg{width:26px;height:26px}
+.brand h1{margin:0;font:400 26px/1 var(--title);letter-spacing:.01em;font-synthesis:none;padding-top:2px}
+.hspace{flex:1}
+.hexport{display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:34px;padding:0 14px;border-radius:8px;border:1px solid var(--line2);background:var(--raise);cursor:pointer;font:600 12px var(--mono);letter-spacing:.06em;text-transform:uppercase;transition:border-color .12s,background .12s;white-space:nowrap}
+.btn:hover{border-color:var(--accent-line)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.btn.ghost{background:transparent}
+.btn.sm{height:28px;padding:0 10px;font-size:11px}
+.btn svg{width:15px;height:15px;flex:none}
+
+/* ---------- main ---------- */
+main{display:grid;grid-template-columns:392px 1fr;gap:12px;min-height:0}
+.side{background:var(--panel);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;min-height:0}
+.tabs{display:flex;gap:6px;padding:12px 12px 0}
+.tab{flex:1;height:34px;border:1px solid var(--line);background:var(--bg2);border-radius:8px;cursor:pointer;font:600 12px var(--mono);letter-spacing:.08em;color:var(--muted)}
+.tab:hover{color:var(--text)}
+.tab.on{color:var(--text);border-color:var(--accent-line);background:var(--accent-soft)}
+.pane{display:none;overflow-y:auto;padding:12px;flex:1;min-height:0}
+.pane.on{display:block}
+.pane::-webkit-scrollbar{width:10px}.pane::-webkit-scrollbar-thumb{background:#2a2f38;border-radius:10px;border:3px solid var(--panel)}
+.disclaimer{flex:none;padding:9px 14px 11px;border-top:1px solid var(--line);font:10.5px/1.5 var(--mono);color:var(--dim)}
+.disclaimer b{color:var(--muted);font-weight:600}
+.sec{border:1px solid var(--line);border-radius:10px;background:var(--bg2);padding:12px;margin-bottom:10px}
+.sec h3{margin:0 0 10px;font:600 11px var(--mono);letter-spacing:.14em;color:var(--muted);display:flex;align-items:center;gap:8px}
+.sec h3 em{margin-left:auto;font-style:normal;letter-spacing:.04em;color:var(--dim);font-weight:500}
+.sec h3 em.full{color:var(--ok)}
+.note{color:var(--muted);font-size:12px;margin:8px 0 0}
+.note code,.gd code{font-family:var(--mono);font-size:11px;color:var(--text);background:var(--raise);padding:1px 5px;border-radius:4px}
+
+/* controls */
+.ctl{padding:10px 0;border-top:1px solid var(--line)}
+.ctl:first-of-type{border-top:0;padding-top:2px}
+.ctl .head{display:flex;align-items:center;gap:10px}
+.ctl .lab{flex:1;min-width:0;display:flex;align-items:center}
+.ctl .lab b{font-weight:600;font-size:13px}
+.ctl .seg{margin-top:7px}
+.info{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;border:1px solid var(--line2);color:var(--muted);font:italic 700 10px/1 Georgia,serif;cursor:help;margin-left:7px;flex:none;transition:.12s;user-select:none}
+.info:hover{color:var(--accent-ink);background:var(--accent);border-color:var(--accent)}
+.tip{position:fixed;z-index:80;max-width:290px;background:#1d2128;border:1px solid var(--line2);border-radius:9px;padding:9px 11px;font:12px/1.5 var(--sans);color:var(--text);box-shadow:0 12px 32px #000b;pointer-events:none;opacity:0;transform:translateY(3px);transition:opacity .12s,transform .12s}
+.tip.on{opacity:1;transform:none}
+.txt{width:100%;height:32px;border-radius:7px;border:1px solid var(--line2);background:var(--panel);padding:0 9px;font:12px var(--mono)}
+.txt:focus,.fmt:focus,.sel:focus{outline:none;border-color:var(--accent)}
+.tg{position:relative;width:38px;height:22px;flex:none}
+.tg input{opacity:0;width:0;height:0;position:absolute}
+.tg span{position:absolute;inset:0;border-radius:22px;background:#2b3039;border:1px solid var(--line2);transition:.15s;cursor:pointer}
+.tg span::after{content:"";position:absolute;width:16px;height:16px;border-radius:50%;left:2px;top:2px;background:#9aa0aa;transition:.15s}
+.tg input:checked + span{background:var(--accent);border-color:var(--accent)}
+.tg input:checked + span::after{left:18px;background:#ffffff}
+.tg input:focus-visible + span{outline:2px solid var(--accent-line);outline-offset:2px}
+.tg input:disabled + span{opacity:.4;cursor:not-allowed}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.field > span{font:10px var(--mono);letter-spacing:.12em;color:var(--dim);display:flex;align-items:center}
+.seg{display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;background:var(--panel)}
+.seg button{flex:1;height:30px;border:0;background:transparent;cursor:pointer;font:600 11px var(--mono);letter-spacing:.06em;color:var(--muted)}
+.seg button:hover{color:var(--text)}
+.seg button + button{border-left:1px solid var(--line2)}
+.seg button.on{background:var(--accent-soft);color:var(--accent-hi)}
+.seg button:disabled{opacity:.35;cursor:not-allowed}
+.exgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.exgrid .btn{height:40px}
+.exgrid .wide{grid-column:1/-1}
+select.sel{height:30px;border-radius:7px;border:1px solid var(--line2);background:var(--panel);padding:0 6px;font:11.5px var(--mono);cursor:pointer}
+
+/* import */
+.dropzone{border:1px dashed var(--line2);border-radius:9px;padding:14px 12px;text-align:center;color:var(--muted);font-size:12px;background:var(--panel);transition:.12s}
+.dropzone b{display:block;color:var(--text);font:600 12px var(--mono);letter-spacing:.06em;margin-bottom:3px}
+.dropzone .btnrow{display:flex;gap:6px;margin-top:10px}.dropzone .btnrow .btn{flex:1;padding:0 6px}
+
+/* slots */
+.slot{display:flex;align-items:center;gap:10px;padding:6px;border:1px solid transparent;border-radius:9px;cursor:pointer;transition:border-color .12s,background .12s}
+.slot + .slot{margin-top:3px}
+.slot:hover{border-color:var(--line2);background:var(--panel)}
+.slot.on{border-color:var(--accent-line);background:var(--accent-soft)}
+.slot.over{border-color:var(--accent);border-style:dashed;background:var(--accent-soft)}
+.thumb{width:44px;height:44px;border-radius:7px;border:1px solid var(--line2);flex:none;overflow:hidden;background:repeating-conic-gradient(#2a2d34 0 25%,#1f2228 0 50%) 0 0/10px 10px}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb.empty{background:var(--panel);border-style:dashed;display:grid;place-items:center;color:var(--dim);font:500 18px var(--mono)}
+.slot:hover .thumb.empty{color:var(--accent-hi);border-color:var(--accent-line)}
+.sinfo{flex:1;min-width:0}
+.sinfo b{display:block;font:600 12.5px var(--mono);letter-spacing:.01em}
+.sinfo span{display:block;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sinfo span.dim{color:var(--dim)}
+.sinfo span.warn{color:var(--warn)}
+.fmt{height:26px;border-radius:6px;border:1px solid var(--line2);background:var(--panel);font:600 11px var(--mono);padding:0 3px;cursor:pointer;color:var(--accent-hi);flex:none}
+.fmt.fixed{display:inline-grid;place-items:center;padding:0 8px;cursor:default;color:var(--muted)}
+.xbtn{width:24px;height:24px;border-radius:6px;border:1px solid var(--line2);background:transparent;color:var(--dim);cursor:pointer;font:600 13px/1 var(--mono);padding:0;flex:none;transition:.12s}
+.xbtn:hover{color:var(--accent-ink);background:var(--accent);border-color:var(--accent)}
+.xbtn.ph{visibility:hidden}
+
+/* guide */
+.gd{font-size:12px;color:var(--muted)}
+.gd p{margin:0 0 8px}
+.gd ol,.gd ul{margin:0;padding-left:18px}.gd li{margin:3px 0}
+.gd b{color:var(--text);font-weight:600}
+table.ref{width:100%;border-collapse:collapse;font:11px var(--mono)}
+table.ref td{padding:5px 4px;border-top:1px solid var(--line);vertical-align:top;color:var(--muted)}
+table.ref tr:first-child td{border-top:0}
+table.ref td:first-child{color:var(--text);white-space:nowrap}
+table.ref td:nth-child(2){color:var(--accent-hi);white-space:nowrap}
+.gd a{color:var(--accent-hi)}
+
+/* ---------- viewer ---------- */
+.viewer{background:var(--panel);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;min-height:0;min-width:0}
+.vbar{display:flex;align-items:center;gap:10px;padding:12px;flex-wrap:wrap}
+.vbar .seg button{padding:0 11px}
+.vbar .sp{flex:1}
+.zoom{font:12px var(--mono);color:var(--muted);min-width:46px;text-align:right}
+.stage{position:relative;flex:1;margin:0 12px 12px;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#0d0e11;min-height:0;touch-action:none;user-select:none;cursor:grab}
+.stage.panning{cursor:grabbing}
+#art{position:absolute;left:0;top:0;display:block;transform-origin:0 0;background:repeating-conic-gradient(#2a2d34 0 25%,#1f2228 0 50%) 0 0/16px 16px;box-shadow:0 0 0 1px #ffffff12,0 18px 50px -10px #000c}
+#art.px{image-rendering:pixelated}
+#empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:var(--dim);font:12px var(--mono);pointer-events:none}
+#empty svg{width:46px;height:46px;color:var(--line2);margin-bottom:10px}
+#empty b{display:block;color:var(--muted);font:600 14px var(--mono);letter-spacing:.06em;margin-bottom:4px}
+.labels{position:absolute;left:10px;right:10px;bottom:10px;display:flex;justify-content:space-between;gap:8px;pointer-events:none;flex-wrap:wrap}
+.labels span{font:600 10px var(--mono);letter-spacing:.12em;color:#cfd2d8;background:#0b0c0fcc;border:1px solid var(--line);padding:4px 8px;border-radius:6px}
+.labels span:empty{display:none}
+.labels .hot{color:var(--accent-hi);border-color:var(--accent-line)}
+
+/* ---------- overlays ---------- */
+.toast{position:fixed;right:22px;bottom:26px;background:var(--raise);border:1px solid var(--accent-line);border-radius:10px;padding:10px 14px;font:12px var(--mono);box-shadow:0 10px 30px #000a;transform:translateY(12px);opacity:0;transition:.2s;pointer-events:none;z-index:90;max-width:460px;white-space:pre-line}
+.toast.on{transform:none;opacity:1}
+.toast.err{border-color:var(--err);color:#ffc9c9}
+.dropfx{position:fixed;inset:0;background:rgba(182,0,60,.10);border:2px dashed var(--accent-line);border-radius:14px;margin:8px;display:none;place-items:center;font:600 18px var(--mono);color:var(--accent-hi);z-index:50;pointer-events:none}
+.dropfx.on{display:grid}
+.busy{position:fixed;inset:0;background:#0b0c0fb8;display:none;place-items:center;z-index:70}
+.busy.on{display:grid}
+.busy .card{width:380px;max-width:calc(100vw - 32px);background:var(--panel);border:1px solid var(--line2);border-radius:12px;padding:16px 18px;box-shadow:0 20px 60px #000c}
+.busy h4{margin:0;font:600 12px var(--mono);letter-spacing:.12em;color:var(--text)}
+.busy p{margin:6px 0 0;font:11.5px var(--mono);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar{height:6px;background:#2b3039;border-radius:6px;overflow:hidden;margin-top:12px}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+
+@media (max-width:860px){
+  html,body{overflow:auto;height:auto}
+  body{padding:10px}
+  .top{flex-wrap:wrap}.brand{min-width:0}
+  main{grid-template-columns:1fr}
+  .pane{overflow:visible}
+  .viewer{height:70vh}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <div class="mark"><svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3" y="3" width="18" height="18" rx="3.2" fill="#ffffff"/>
+      <path fill="none" stroke="#8a002d" stroke-width="1.6" stroke-linecap="round" d="M3.5 9.2H20.5M3.5 14.8H20.5M9.2 3.5V20.5M14.8 3.5V20.5"/>
+      <rect x="9.9" y="9.9" width="4.2" height="4.2" rx=".6" fill="#b6003c"/>
+    </svg></div>
+    <div><h1>Skin Converter</h1></div>
+  </div>
+  <div class="hspace"></div>
+  <div class="hexport">
+    <button class="btn" id="hdrPng" title="Download every loaded texture as PNG (zip)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>PNG</button>
+    <button class="btn" id="hdrTga" title="Download every loaded texture as TGA (zip)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>TGA</button>
+    <button class="btn primary" id="hdrSkin" title="Encode all textures to DDS and pack the skin .zip (Ctrl+S)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Export Skin</button>
+  </div>
+</header>
+
+<main>
+  <aside class="side">
+    <div class="tabs">
+      <button class="tab on" data-tab="slots">TEXTURES</button>
+      <button class="tab" data-tab="export">EXPORT</button>
+      <button class="tab" data-tab="guide">GUIDE</button>
+    </div>
+
+    <!-- TEXTURES -->
+    <div class="pane on" id="pane-slots">
+      <div class="sec">
+        <h3>IMPORT<span class="info" data-tip="PNG, TGA, DDS, JPG or a whole skin <code>.zip</code>. Files are matched to slots by name, e.g. <code>Skin_B.png</code> or <code>MyCar_Details_N.tga</code>. Drop a file straight onto a slot to put it there.">i</span><em id="loadedCount"></em></h3>
+        <div class="dropzone">
+          <b>DROP FILES, FOLDERS OR A SKIN .ZIP</b>
+          anywhere on this window
+          <div class="btnrow">
+            <button class="btn sm" id="btnFiles">Add files</button>
+            <button class="btn sm" id="btnFolder">Add folder</button>
+            <button class="btn sm ghost" id="btnClear">Clear</button>
+          </div>
+        </div>
+      </div>
+      <div id="slotList"></div>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="pane" id="pane-export">
+      <div class="sec">
+        <h3>SKIN ZIP<em id="exportSummary"></em></h3>
+        <label class="field"><span>SKIN NAME</span><input class="txt" id="optName" spellcheck="false" maxlength="80"></label>
+        <div class="ctl"><div class="head"><div class="lab"><b>Mipmaps</b><span class="info" data-tip="Adds the full chain of smaller versions so the car stays clean and shimmer-free at a distance. Leave on.">i</span></div><label class="tg"><input type="checkbox" id="optMips"><span></span></label></div></div>
+        <div class="ctl"><div class="head"><div class="lab"><b>Gamma-correct mipmaps</b><span class="info" data-tip="Colour maps (<code>_B</code>, <code>_D</code>, <code>_I</code>) are averaged in linear light, so small mip levels don't get too dark. Normal maps are always renormalised.">i</span></div><label class="tg"><input type="checkbox" id="optGamma"><span></span></label></div></div>
+        <div class="ctl"><div class="head"><div class="lab"><b>Reuse matching DDS</b><span class="info" data-tip="Imported DDS files that are already in the right format (with mipmaps) are copied into the zip untouched instead of being compressed a second time.">i</span></div><label class="tg"><input type="checkbox" id="optKeep"><span></span></label></div></div>
+        <div class="ctl"><div class="head"><div class="lab"><b>Choose where to save</b><span class="info" data-tip="Opens a save dialog so you can drop the zip straight into <code>Documents\Trackmania\Skins\Models\CarSport</code>. Off = normal browser download.">i</span></div><label class="tg"><input type="checkbox" id="optAsk"><span></span></label></div></div>
+        <div class="ctl"><div class="head"><div class="lab"><b>Compression quality</b><span class="info" data-tip="<b>High</b> refines every 4×4 block a few more times. Slightly slower, noticeably cleaner gradients.">i</span></div></div>
+          <div class="seg" id="segQuality"><button data-v="fast">FAST</button><button data-v="high">HIGH</button></div></div>
+        <div class="exgrid" style="margin-top:10px"><button class="btn primary wide" id="btnExport">Export skin .zip</button></div>
+        <p class="note">Formats follow the official guide's D3D9 presets: <code>DXT1</code> (BC1), <code>DXT5</code> (BC3), <code>ATI1</code> (BC4), <code>ATI2</code> (BC5).</p>
+      </div>
+      <div class="sec">
+        <h3>EXTRACT TEXTURES</h3>
+        <div class="ctl"><div class="head"><div class="lab"><b>Format</b></div></div>
+          <div class="seg" id="segExtract"><button data-v="png">PNG</button><button data-v="tga">TGA</button><button data-v="both">BOTH</button></div></div>
+        <div class="ctl"><div class="head"><div class="lab"><b>Always 32-bit RGBA</b><span class="info" data-tip="Off: opaque images are saved as RGB and grey ones as greyscale (same pixels, smaller files). On: every file is full RGBA.">i</span></div><label class="tg"><input type="checkbox" id="optRgba"><span></span></label></div></div>
+        <div class="exgrid" style="margin-top:10px"><button class="btn wide" id="btnExtract">Download textures (.zip)</button></div>
+        <p class="note">Decoding is lossless: you get exactly the pixels stored in the DDS, ready to edit.</p>
+      </div>
+    </div>
+
+    <!-- GUIDE -->
+    <div class="pane gd" id="pane-guide">
+      <div class="sec">
+        <h3>TEXTURE SLOTS</h3>
+        <table class="ref" id="refTable"></table>
+      </div>
+      <div class="sec">
+        <h3>CHANNELS</h3>
+        <ul>
+          <li><b>_R maps:</b> red = roughness, green = metalness.</li>
+          <li><b>_N maps:</b> OpenGL normals (Y+, green up). The Skin set has no normal map.</li>
+          <li><b>_I maps:</b> RGB = light colour, alpha = grey codes that tell the game what the light is for (see the alpha table in the official thread).</li>
+          <li><b>Glass_D:</b> colour tints the glass, brightness sets how opaque it is.</li>
+          <li><b>Skin_CoatR</b> is optional: without it the clear coat is derived from roughness and metalness.</li>
+          <li>Don't bake ambient occlusion in, the game adds its own.</li>
+        </ul>
+      </div>
+      <div class="sec">
+        <h3>IN GAME</h3>
+        <ol>
+          <li>Export the skin .zip (DDS textures + <code>Icon.tga</code>).</li>
+          <li>Put it in <code>Documents\Trackmania\Skins\Models\CarSport</code>.</li>
+          <li>Open your club → <b>Skins</b> → <b>Upload a skin</b> and pick the zip.</li>
+          <li>In the skin menu, pick it with the arrows and fill the heart, then select it in your profile.</li>
+        </ol>
+        <p class="note">UV maps, the 3D model and baked maps: <a href="https://devtrackers.gg/trackmania/p/3490d99c-stadium-car-ressources-all-you-need-to-create-skins-for-the-stadium-cars" target="_blank" rel="noopener">Stadium car resources</a>.</p>
+      </div>
+    </div>
+
+    <div class="disclaimer"><b>100% local.</b> Everything runs in your browser, nothing is uploaded.</div>
+  </aside>
+
+  <section class="viewer">
+    <div class="vbar">
+      <div class="seg" id="segChan"><button data-v="rgba">RGBA</button><button data-v="rgb">RGB</button><button data-v="r">R</button><button data-v="g">G</button><button data-v="b">B</button><button data-v="a">A</button></div>
+      <div class="seg" id="segSrc"><button data-v="source" title="The pixels you imported">SOURCE</button><button data-v="encoded" title="Preview after DDS compression with the slot's format">ENCODED</button></div>
+      <div class="sp"></div>
+      <button class="btn sm" id="dlPng" title="Download this texture as PNG">PNG</button>
+      <button class="btn sm" id="dlTga" title="Download this texture as TGA">TGA</button>
+      <button class="btn sm" id="dlDds" title="Download this texture as DDS in the slot's format">DDS</button>
+      <span class="zoom" id="zoomLbl"></span>
+      <button class="btn sm ghost" id="btnFit" title="Fit to view (double-click the image)">FIT</button>
+    </div>
+    <div class="stage" id="stage">
+      <canvas id="art" hidden></canvas>
+      <div id="empty"><div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+        <b>NO TEXTURE SELECTED</b>Drop textures or a skin .zip, then pick a slot on the left
+      </div></div>
+      <div class="labels"><span id="lblL"></span><span id="lblR"></span></div>
+    </div>
+  </section>
+</main>
+
+<input type="file" id="fileIn" multiple accept=".png,.tga,.dds,.zip,.jpg,.jpeg,.webp,.bmp" hidden>
+<input type="file" id="dirIn" webkitdirectory multiple hidden>
+<input type="file" id="slotIn" accept=".png,.tga,.dds,.jpg,.jpeg,.webp,.bmp" hidden>
+<div class="tip" id="tip"></div>
+<div class="toast" id="toast"></div>
+<div class="dropfx" id="dropfx">DROP TEXTURES OR A SKIN .ZIP</div>
+<div class="busy" id="busy"><div class="card"><h4 id="busyTitle">WORKING</h4><p id="busyText"></p><div class="bar"><i id="busyBar"></i></div></div></div>
+
+<!-- =====================================================================
+     CODEC: DDS / PNG / TGA / ZIP and BC1-BC5 encoders.
+     Runs on the page and, copied into Web Workers, in parallel.
+     ===================================================================== -->
+<script id="codec">
+'use strict';
+class CodecError extends Error {}
+
+const E5 = new Uint8Array(32), E6 = new Uint8Array(64);
+for (let i = 0; i < 32; i++) E5[i] = i << 3 | i >> 2;
+for (let i = 0; i < 64; i++) E6[i] = i << 2 | i >> 4;
+
+/* ------------------------------------------------------------ helpers */
+async function streamThrough(u8, ts) {
+  const s = new Blob([u8]).stream().pipeThrough(ts);
+  return new Uint8Array(await new Response(s).arrayBuffer());
+}
+const inflate = (u8, fmt) => streamThrough(u8, new DecompressionStream(fmt));
+const deflate = (u8, fmt) => streamThrough(u8, new CompressionStream(fmt));
+
+const CRC_T = (() => {
+  const t = new Int32Array(256);
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c; }
+  return t;
+})();
+function crc32(u8, prev = 0) {
+  let c = ~prev;
+  for (let i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 255] ^ (c >>> 8);
+  return (~c) >>> 0;
+}
+function concatBytes(parts) {
+  let n = 0; for (const p of parts) n += p.length;
+  const out = new Uint8Array(n); let o = 0;
+  for (const p of parts) { out.set(p, o); o += p.length; }
+  return out;
+}
+
+/* ------------------------------------------------------------ DDS decode */
+function palette565(s, o, four, pal) {
+  const c0 = s[o] | s[o + 1] << 8, c1 = s[o + 2] | s[o + 3] << 8;
+  const r0 = E5[c0 >> 11], g0 = E6[(c0 >> 5) & 63], b0 = E5[c0 & 31];
+  const r1 = E5[c1 >> 11], g1 = E6[(c1 >> 5) & 63], b1 = E5[c1 & 31];
+  pal[0] = r0; pal[1] = g0; pal[2] = b0; pal[3] = 255;
+  pal[4] = r1; pal[5] = g1; pal[6] = b1; pal[7] = 255;
+  if (four || c0 > c1) {
+    pal[8] = ((2 * r0 + r1 + 1) / 3) | 0; pal[9] = ((2 * g0 + g1 + 1) / 3) | 0; pal[10] = ((2 * b0 + b1 + 1) / 3) | 0; pal[11] = 255;
+    pal[12] = ((r0 + 2 * r1 + 1) / 3) | 0; pal[13] = ((g0 + 2 * g1 + 1) / 3) | 0; pal[14] = ((b0 + 2 * b1 + 1) / 3) | 0; pal[15] = 255;
+  } else {
+    pal[8] = (r0 + r1 + 1) >> 1; pal[9] = (g0 + g1 + 1) >> 1; pal[10] = (b0 + b1 + 1) >> 1; pal[11] = 255;
+    pal[12] = pal[13] = pal[14] = pal[15] = 0;
+  }
+}
+function bc4Palette(a0, a1, signed, p) {
+  let lo = 0, hi = 255;
+  if (signed) {
+    if (a0 > 127) a0 -= 256; if (a1 > 127) a1 -= 256;
+    if (a0 < -127) a0 = -127; if (a1 < -127) a1 = -127;
+    lo = -127; hi = 127;
+  }
+  p[0] = a0; p[1] = a1;
+  if (a0 > a1) for (let i = 1; i < 7; i++) p[i + 1] = Math.floor(((7 - i) * a0 + i * a1 + 3) / 7);
+  else { for (let i = 1; i < 5; i++) p[i + 1] = Math.floor(((5 - i) * a0 + i * a1 + 2) / 5); p[6] = lo; p[7] = hi; }
+  if (signed) for (let i = 0; i < 8; i++) p[i] = Math.floor(((p[i] + 127) * 255 + 127) / 254);
+}
+const _pal = new Uint8Array(16), _a8 = new Int32Array(8), _va = new Uint8Array(16), _vb = new Uint8Array(16);
+function bc4Decode(s, o, signed, out) {
+  bc4Palette(s[o], s[o + 1], signed, _a8);
+  const lo = s[o + 2] | s[o + 3] << 8 | s[o + 4] << 16, hi = s[o + 5] | s[o + 6] << 8 | s[o + 7] << 16;
+  for (let i = 0; i < 8; i++) { out[i] = _a8[(lo >> (3 * i)) & 7]; out[i + 8] = _a8[(hi >> (3 * i)) & 7]; }
+}
+function colorBlockToPx(s, o, four, px, alpha) {
+  palette565(s, o, four, _pal);
+  for (let r = 0; r < 4; r++) {
+    const b = s[o + 4 + r];
+    for (let c = 0; c < 4; c++) {
+      const k = ((b >> (2 * c)) & 3) * 4, d = (r * 4 + c) * 4;
+      px[d] = _pal[k]; px[d + 1] = _pal[k + 1]; px[d + 2] = _pal[k + 2];
+      px[d + 3] = alpha ? alpha[r * 4 + c] : _pal[k + 3];
+    }
+  }
+}
+function grayPx(v, px) { for (let i = 0; i < 16; i++) { px[4 * i] = px[4 * i + 1] = px[4 * i + 2] = v[i]; px[4 * i + 3] = 255; } }
+function rgPx(r, g, b, px) { for (let i = 0; i < 16; i++) { px[4 * i] = r[i]; px[4 * i + 1] = g[i]; px[4 * i + 2] = b; px[4 * i + 3] = 255; } }
+
+const BLOCK_DEC = {
+  BC1: [8, (s, o, px) => colorBlockToPx(s, o, false, px, null)],
+  BC2: [16, (s, o, px) => {
+    for (let r = 0; r < 4; r++) { const a = s[o + 2 * r] | s[o + 2 * r + 1] << 8; for (let c = 0; c < 4; c++) _va[r * 4 + c] = ((a >> (4 * c)) & 15) * 17; }
+    colorBlockToPx(s, o + 8, true, px, _va);
+  }],
+  BC3: [16, (s, o, px) => { bc4Decode(s, o, false, _va); colorBlockToPx(s, o + 8, true, px, _va); }],
+  BC4: [8, (s, o, px) => { bc4Decode(s, o, false, _va); grayPx(_va, px); }],
+  BC4S: [8, (s, o, px) => { bc4Decode(s, o, true, _va); grayPx(_va, px); }],
+  BC5: [16, (s, o, px) => { bc4Decode(s, o, false, _va); bc4Decode(s, o + 8, false, _vb); rgPx(_va, _vb, 0, px); }],
+  BC5S: [16, (s, o, px) => { bc4Decode(s, o, true, _va); bc4Decode(s, o + 8, true, _vb); rgPx(_va, _vb, 128, px); }],
+  BC7: [16, (s, o, px) => bc7Decode(s, o, px)],
+};
+
+/* BC7 ------------------------------------------------------------------ */
+const BC7_MODES = [
+  [3, 4, 0, 0, 4, 0, 1, 0, 3, 0], [2, 6, 0, 0, 6, 0, 0, 1, 3, 0], [3, 6, 0, 0, 5, 0, 0, 0, 2, 0], [2, 6, 0, 0, 7, 0, 1, 0, 2, 0],
+  [1, 0, 2, 1, 5, 6, 0, 0, 2, 3], [1, 0, 2, 0, 7, 8, 0, 0, 2, 2], [1, 0, 0, 0, 7, 7, 1, 0, 4, 0], [2, 6, 0, 0, 5, 5, 1, 0, 2, 0]];
+const BC7_W = { 2: [0, 21, 43, 64], 3: [0, 9, 18, 27, 37, 46, 55, 64], 4: [0, 4, 9, 13, 17, 21, 26, 30, 34, 38, 43, 47, 51, 55, 60, 64] };
+const BC7_P2 = [
+  0xCCCC, 0x8888, 0xEEEE, 0xECC8, 0xC880, 0xFEEC, 0xFEC8, 0xEC80, 0xC800, 0xFFEC, 0xFE80, 0xE800, 0xFFE8, 0xFF00, 0xFFF0, 0xF000,
+  0xF710, 0x008E, 0x7100, 0x08CE, 0x008C, 0x7310, 0x3100, 0x8CCE, 0x088C, 0x3110, 0x6666, 0x366C, 0x17E8, 0x0FF0, 0x718E, 0x399C,
+  0xAAAA, 0xF0F0, 0x5A5A, 0x33CC, 0x3C3C, 0x55AA, 0x9696, 0xA55A, 0x73CE, 0x13C8, 0x324C, 0x3BDC, 0x6996, 0xC33C, 0x9966, 0x0660,
+  0x0272, 0x04E4, 0x4E40, 0x2720, 0xC936, 0x936C, 0x39C6, 0x639C, 0x9336, 0x9CC6, 0x817E, 0xE718, 0xCCF0, 0x0FCC, 0x7744, 0xEE22];
+const BC7_P3 = [
+  0xAA685050, 0x6A5A5040, 0x5A5A4200, 0x5450A0A8, 0xA5A50000, 0xA0A05050, 0x5555A0A0, 0x5A5A5050,
+  0xAA550000, 0xAA555500, 0xAAAA5500, 0x90909090, 0x94949494, 0xA4A4A4A4, 0xA9A59450, 0x2A0A4250,
+  0xA5945040, 0x0A425054, 0xA5A5A500, 0x55A0A0A0, 0xA8A85454, 0x6A6A4040, 0xA4A45000, 0x1A1A0500,
+  0x0050A4A4, 0xAAA59090, 0x14696914, 0x69691400, 0xA08585A0, 0xAA821414, 0x50A4A450, 0x6A5A0200,
+  0xA9A58000, 0x5090A0A8, 0xA8A09050, 0x24242424, 0x00AA5500, 0x24924924, 0x24499224, 0x50A50A50,
+  0x500AA550, 0xAAAA4444, 0x66660000, 0xA5A0A5A0, 0x50A050A0, 0x69286928, 0x44AAAA44, 0x66666600,
+  0xAA444444, 0x54A854A8, 0x95809580, 0x96969600, 0xA85454A8, 0x80959580, 0xAA141414, 0x96960000,
+  0xAAAA1414, 0xA05050A0, 0xA0A5A5A0, 0x96000000, 0x40804080, 0xA9A8A9A8, 0xAAAAAA44, 0x2A4A5254];
+const BC7_A2 = [
+  15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 2, 8, 2, 2, 8, 8, 15, 2, 8, 2, 2, 8, 8, 2, 2,
+  15, 15, 6, 8, 2, 8, 15, 15, 2, 8, 2, 2, 2, 15, 15, 6, 6, 2, 6, 8, 15, 15, 2, 2, 15, 15, 15, 15, 15, 2, 2, 15];
+const BC7_A3A = [
+  3, 3, 15, 15, 8, 3, 15, 15, 8, 8, 6, 6, 6, 5, 3, 3, 3, 3, 8, 15, 3, 3, 6, 10, 5, 8, 8, 6, 8, 5, 15, 15,
+  8, 15, 3, 5, 6, 10, 8, 15, 15, 3, 15, 5, 15, 15, 15, 15, 3, 15, 5, 5, 5, 8, 5, 10, 5, 10, 8, 13, 15, 12, 3, 3];
+const BC7_A3B = [
+  15, 8, 8, 3, 15, 15, 3, 8, 15, 15, 15, 15, 15, 15, 15, 8, 15, 8, 15, 3, 15, 8, 15, 8, 3, 15, 6, 10, 15, 15, 10, 8,
+  15, 3, 15, 10, 10, 8, 9, 10, 6, 15, 8, 15, 3, 6, 6, 8, 15, 3, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 3, 15, 15, 8];
+
+function bc7Decode(s, o, px) {
+  const first = s[o];
+  if (!first) { px.fill(0); return; }
+  let mode = 0; while (!((first >> mode) & 1)) mode++;
+  const [ns, pbits, rbits, ibits, cb, ab, epb, spb, ib, ib2] = BC7_MODES[mode];
+  let pos = mode + 1;
+  const rd = n => { let v = 0; for (let i = 0; i < n; i++, pos++) v |= ((s[o + (pos >> 3)] >> (pos & 7)) & 1) << i; return v; };
+  const part = rd(pbits), rot = rd(rbits), isb = rd(ibits);
+  const ne = ns * 2, ep = [];
+  for (let e = 0; e < ne; e++) ep.push([0, 0, 0, 255]);
+  for (let c = 0; c < 3; c++) for (let e = 0; e < ne; e++) ep[e][c] = rd(cb);
+  if (ab) for (let e = 0; e < ne; e++) ep[e][3] = rd(ab);
+  const nch = ab ? 4 : 3;
+  if (epb) for (let e = 0; e < ne; e++) { const p = rd(1); for (let c = 0; c < nch; c++) ep[e][c] = ep[e][c] << 1 | p; }
+  else if (spb) for (let k = 0; k < ns; k++) { const p = rd(1); for (const e of [2 * k, 2 * k + 1]) for (let c = 0; c < 3; c++) ep[e][c] = ep[e][c] << 1 | p; }
+  const cp = cb + (epb || spb ? 1 : 0), ap = ab + (epb ? 1 : 0);
+  for (const e of ep) {
+    for (let c = 0; c < 3; c++) e[c] = (e[c] << (8 - cp)) | (e[c] >> (2 * cp - 8));
+    if (ab) e[3] = (e[3] << (8 - ap)) | (e[3] >> (2 * ap - 8));
+  }
+  let subset, anchors;
+  if (ns === 1) { subset = null; anchors = [0]; }
+  else if (ns === 2) { const m = BC7_P2[part]; subset = i => (m >> i) & 1; anchors = [0, BC7_A2[part]]; }
+  else { const m = BC7_P3[part]; subset = i => (m >>> (2 * i)) & 3; anchors = [0, BC7_A3A[part], BC7_A3B[part]]; }
+  const idx1 = new Array(16), idx2 = new Array(16);
+  for (let i = 0; i < 16; i++) idx1[i] = rd(anchors.includes(i) ? ib - 1 : ib);
+  let cidx = idx1, aidx = idx1, cw = BC7_W[ib], aw = BC7_W[ib];
+  if (ib2) {
+    for (let i = 0; i < 16; i++) idx2[i] = rd(i === 0 ? ib2 - 1 : ib2);
+    if (isb) { cidx = idx2; cw = BC7_W[ib2]; } else { aidx = idx2; aw = BC7_W[ib2]; }
+  }
+  for (let i = 0; i < 16; i++) {
+    const k = subset ? subset(i) : 0, e0 = ep[2 * k], e1 = ep[2 * k + 1];
+    let w = cw[cidx[i]], iw = 64 - w;
+    let r = (iw * e0[0] + w * e1[0] + 32) >> 6, g = (iw * e0[1] + w * e1[1] + 32) >> 6, b = (iw * e0[2] + w * e1[2] + 32) >> 6;
+    w = aw[aidx[i]];
+    let a = ((64 - w) * e0[3] + w * e1[3] + 32) >> 6;
+    if (rot === 1) [r, a] = [a, r]; else if (rot === 2) [g, a] = [a, g]; else if (rot === 3) [b, a] = [a, b];
+    px[4 * i] = r; px[4 * i + 1] = g; px[4 * i + 2] = b; px[4 * i + 3] = a;
+  }
+}
+
+function decodeBlocks(u8, off, w, h, bsize, fn) {
+  const bw = (w + 3) >> 2, bh = (h + 3) >> 2;
+  if (u8.length - off < bw * bh * bsize) throw new CodecError('file is truncated');
+  const out = new Uint8Array(w * h * 4), px = new Uint8Array(64);
+  let o = off;
+  for (let by = 0; by < bh; by++) for (let bx = 0; bx < bw; bx++, o += bsize) {
+    fn(u8, o, px);
+    for (let r = 0; r < 4; r++) {
+      const y = by * 4 + r; if (y >= h) break;
+      for (let c = 0; c < 4; c++) {
+        const x = bx * 4 + c; if (x >= w) break;
+        const d = (y * w + x) * 4, sI = (r * 4 + c) * 4;
+        out[d] = px[sI]; out[d + 1] = px[sI + 1]; out[d + 2] = px[sI + 2]; out[d + 3] = px[sI + 3];
+      }
+    }
+  }
+  return out;
+}
+
+function decodeMasked(u8, off, w, h, bpp, masks, gray, fill) {
+  if (![8, 16, 24, 32].includes(bpp)) throw new CodecError(`unsupported bit depth ${bpp}`);
+  const bpx = bpp >> 3, n = w * h;
+  if (u8.length - off < n * bpx) throw new CodecError('file is truncated');
+  if (gray) masks = [masks[0], masks[0], masks[0], masks[3]];
+  const ch = masks.map(m => {
+    m >>>= 0; if (!m) return null;
+    if (bpp < 32 && (m >>> bpp)) throw new CodecError('channel mask exceeds pixel size');
+    let sh = 0; while (!((m >>> sh) & 1)) sh++;
+    const mx = m >>> sh;
+    if (mx & (mx + 1)) throw new CodecError('non-contiguous channel mask');
+    if (mx > 255) throw new CodecError('channels with more than 8 bits are not supported');
+    return [m, sh, mx];
+  });
+  const def = [fill, fill, fill, 255], out = new Uint8Array(n * 4);
+  for (let i = 0, p = off; i < n; i++, p += bpx) {
+    let v = 0; for (let b = 0; b < bpx; b++) v |= u8[p + b] << (8 * b);
+    for (let c = 0; c < 4; c++) {
+      const q = ch[c];
+      if (!q) { out[4 * i + c] = def[c]; continue; }
+      const x = ((v & q[0]) >>> q[1]);
+      out[4 * i + c] = q[2] === 255 ? x : Math.floor((x * 255 + (q[2] >> 1)) / q[2]);
+    }
+  }
+  return out;
+}
+
+const DDS_FOURCC = { DXT1: 'BC1', DXT2: 'BC2', DXT3: 'BC2', DXT4: 'BC3', DXT5: 'BC3', ATI1: 'BC4', BC4U: 'BC4', BC4S: 'BC4S', ATI2: 'BC5', BC5U: 'BC5', BC5S: 'BC5S' };
+const M = (name, bpp, r, g, b, a, gray = false, fill = 0) => ({ name, bpp, masks: [r, g, b, a], gray, fill });
+const DXGI = {};
+for (const [ids, spec] of [
+  [[70, 71, 72], 'BC1'], [[73, 74, 75], 'BC2'], [[76, 77, 78], 'BC3'], [[79, 80], 'BC4'], [[81], 'BC4S'],
+  [[82, 83], 'BC5'], [[84], 'BC5S'], [[97, 98, 99], 'BC7'],
+  [[27, 28, 29, 30], M('R8G8B8A8', 32, 0xFF, 0xFF00, 0xFF0000, 0xFF000000)],
+  [[87, 90, 91], M('B8G8R8A8', 32, 0xFF0000, 0xFF00, 0xFF, 0xFF000000)],
+  [[88, 92, 93], M('B8G8R8X8', 32, 0xFF0000, 0xFF00, 0xFF, 0)],
+  [[60, 61, 62], M('R8', 8, 0xFF, 0, 0, 0, true)], [[48, 49, 50], M('R8G8', 16, 0xFF, 0xFF00, 0, 0)],
+  [[65], M('A8', 8, 0, 0, 0, 0xFF, false, 255)], [[85], M('B5G6R5', 16, 0xF800, 0x07E0, 0x1F, 0)],
+  [[86], M('B5G5R5A1', 16, 0x7C00, 0x03E0, 0x1F, 0x8000)], [[115], M('B4G4R4A4', 16, 0x0F00, 0x00F0, 0x0F, 0xF000)]]) for (const id of ids) DXGI[id] = spec;
+
+function decodeDDS(u8) {
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  if (u8.length < 128 || dv.getUint32(0, true) !== 0x20534444) throw new CodecError('not a DDS file');
+  const h = dv.getUint32(12, true), w = dv.getUint32(16, true), mips = Math.max(1, dv.getUint32(28, true));
+  const pf = dv.getUint32(80, true), fcc = String.fromCharCode(u8[84], u8[85], u8[86], u8[87]);
+  if (!w || !h) throw new CodecError('image has zero size');
+  let off = 128, spec, legacy = true;
+  if (pf & 4) {
+    if (fcc === 'DX10') {
+      const dxgi = dv.getUint32(128, true); off = 148; legacy = false;
+      spec = DXGI[dxgi];
+      if (!spec) throw new CodecError(dxgi >= 94 && dxgi <= 96 ? 'BC6H (HDR) is not supported' : `unsupported DXGI format ${dxgi}`);
+    } else {
+      spec = DDS_FOURCC[fcc];
+      if (!spec) throw new CodecError(`unsupported FourCC ${/^[\x20-\x7e]{4}$/.test(fcc) ? fcc : dv.getUint32(84, true)}`);
+    }
+  } else if (pf & (0x40 | 0x20000 | 0x2)) {
+    let [bpp, r, g, b, a] = [88, 92, 96, 100, 104].map(x => dv.getUint32(x, true));
+    if (!(pf & 0x3)) a = 0;
+    const alphaOnly = !(pf & (0x40 | 0x20000));
+    if (alphaOnly) r = g = b = 0;
+    spec = M(`RGB ${bpp}-bit`, bpp, r, g, b, a, !!(pf & 0x20000), alphaOnly ? 255 : 0);
+  } else throw new CodecError('unsupported pixel format');
+  let rgba, fmt;
+  if (typeof spec === 'string') { fmt = spec; const [bs, fn] = BLOCK_DEC[spec]; rgba = decodeBlocks(u8, off, w, h, bs, fn); }
+  else { fmt = spec.name; rgba = decodeMasked(u8, off, w, h, spec.bpp, spec.masks, spec.gray, spec.fill); }
+  return { w, h, rgba, meta: { fmt, legacy, mips, container: 'DDS' } };
+}
+
+/* ------------------------------------------------------------ BC encoders */
+const OM5 = [], OM6 = [];
+(function buildOM() {
+  for (const [E, N, out] of [[E5, 32, OM5], [E6, 64, OM6]]) for (let v = 0; v < 256; v++) {
+    let be = 1e9, ba = 0, bb = 0;
+    for (let a = 0; a < N; a++) for (let b = 0; b < N; b++) {
+      const c = ((2 * E[a] + E[b] + 1) / 3) | 0, e = Math.abs(c - v) * 100 + Math.abs(E[a] - E[b]);
+      if (e < be) { be = e; ba = a; bb = b; }
+    }
+    out.push([ba, bb]);
+  }
+})();
+const q5 = v => Math.round((v < 0 ? 0 : v > 255 ? 255 : v) * 31 / 255);
+const q6 = v => Math.round((v < 0 ? 0 : v > 255 ? 255 : v) * 63 / 255);
+const to565 = (r, g, b) => q5(r) << 11 | q6(g) << 5 | q5(b);
+
+const _cp = new Int32Array(12), _ti = new Uint8Array(16);
+const _best = { err: 0, c0: 0, c1: 0, idx: new Uint8Array(16) };
+function colorError(px, c0, c1, idx) {
+  const P = _cp;
+  const r0 = E5[c0 >> 11], g0 = E6[(c0 >> 5) & 63], b0 = E5[c0 & 31], r1 = E5[c1 >> 11], g1 = E6[(c1 >> 5) & 63], b1 = E5[c1 & 31];
+  P[0] = r0; P[1] = g0; P[2] = b0; P[3] = r1; P[4] = g1; P[5] = b1;
+  let n;
+  if (c0 > c1) {
+    P[6] = ((2 * r0 + r1 + 1) / 3) | 0; P[7] = ((2 * g0 + g1 + 1) / 3) | 0; P[8] = ((2 * b0 + b1 + 1) / 3) | 0;
+    P[9] = ((r0 + 2 * r1 + 1) / 3) | 0; P[10] = ((g0 + 2 * g1 + 1) / 3) | 0; P[11] = ((b0 + 2 * b1 + 1) / 3) | 0; n = 4;
+  } else { P[6] = (r0 + r1 + 1) >> 1; P[7] = (g0 + g1 + 1) >> 1; P[8] = (b0 + b1 + 1) >> 1; n = 3; }
+  let err = 0;
+  for (let i = 0; i < 16; i++) {
+    const r = px[4 * i], g = px[4 * i + 1], b = px[4 * i + 2];
+    let bd = 1e9, bi = 0;
+    for (let k = 0; k < n; k++) {
+      const dr = r - P[3 * k], dg = g - P[3 * k + 1], db = b - P[3 * k + 2], d = dr * dr + dg * dg + db * db;
+      if (d < bd) { bd = d; bi = k; }
+    }
+    idx[i] = bi; err += bd;
+  }
+  return err;
+}
+function tryPair(px, a, b) {
+  const c0 = a > b ? a : b, c1 = a > b ? b : a;
+  const err = colorError(px, c0, c1, _ti);
+  if (err < _best.err) { _best.err = err; _best.c0 = c0; _best.c1 = c1; _best.idx.set(_ti); }
+}
+const W4 = [1, 0, 2 / 3, 1 / 3], W3 = [1, 0, 0.5];
+function encodeColorBlock(px, out, o, iters) {
+  _best.err = Infinity;
+  let mr = 0, mg = 0, mb = 0, nr = 255, ng = 255, nb = 255, xr = 0, xg = 0, xb = 0;
+  for (let i = 0; i < 16; i++) {
+    const r = px[4 * i], g = px[4 * i + 1], b = px[4 * i + 2];
+    mr += r; mg += g; mb += b;
+    if (r < nr) nr = r; if (g < ng) ng = g; if (b < nb) nb = b;
+    if (r > xr) xr = r; if (g > xg) xg = g; if (b > xb) xb = b;
+  }
+  if (nr === xr && ng === xg && nb === xb) {           // solid colour block
+    tryPair(px, OM5[nr][0] << 11 | OM6[ng][0] << 5 | OM5[nb][0], OM5[nr][1] << 11 | OM6[ng][1] << 5 | OM5[nb][1]);
+    const q = to565(nr, ng, nb); tryPair(px, q, q);
+  } else {
+    mr /= 16; mg /= 16; mb /= 16;
+    let cxx = 0, cxy = 0, cxz = 0, cyy = 0, cyz = 0, czz = 0;
+    for (let i = 0; i < 16; i++) {
+      const r = px[4 * i] - mr, g = px[4 * i + 1] - mg, b = px[4 * i + 2] - mb;
+      cxx += r * r; cxy += r * g; cxz += r * b; cyy += g * g; cyz += g * b; czz += b * b;
+    }
+    let vr = xr - nr, vg = xg - ng, vb = xb - nb;
+    for (let it = 0; it < 4; it++) {
+      const r = cxx * vr + cxy * vg + cxz * vb, g = cxy * vr + cyy * vg + cyz * vb, b = cxz * vr + cyz * vg + czz * vb;
+      const m = Math.max(Math.abs(r), Math.abs(g), Math.abs(b));
+      if (m < 1e-9) break;
+      vr = r / m; vg = g / m; vb = b / m;
+    }
+    let dmin = Infinity, dmax = -Infinity, imin = 0, imax = 0;
+    for (let i = 0; i < 16; i++) {
+      const d = px[4 * i] * vr + px[4 * i + 1] * vg + px[4 * i + 2] * vb;
+      if (d < dmin) { dmin = d; imin = i; } if (d > dmax) { dmax = d; imax = i; }
+    }
+    tryPair(px, to565(px[4 * imax], px[4 * imax + 1], px[4 * imax + 2]), to565(px[4 * imin], px[4 * imin + 1], px[4 * imin + 2]));
+    if (iters > 1) {                                       // inset bounding box as an extra candidate
+      const ir = (xr - nr) / 16, ig = (xg - ng) / 16, ib = (xb - nb) / 16;
+      tryPair(px, to565(xr - ir, xg - ig, xb - ib), to565(nr + ir, ng + ig, nb + ib));
+    }
+    for (let it = 0; it < iters; it++) {                  // least-squares endpoint refinement
+      const W = _best.c0 > _best.c1 ? W4 : W3, idx = _best.idx;
+      let aa = 0, bb = 0, ab = 0, ar = 0, ag = 0, abl = 0, br = 0, bg = 0, bbl = 0;
+      for (let i = 0; i < 16; i++) {
+        const w = W[idx[i]], v = 1 - w, r = px[4 * i], g = px[4 * i + 1], b = px[4 * i + 2];
+        aa += w * w; bb += v * v; ab += w * v; ar += w * r; ag += w * g; abl += w * b; br += v * r; bg += v * g; bbl += v * b;
+      }
+      const det = aa * bb - ab * ab;
+      if (Math.abs(det) < 1e-6) break;
+      const f = 1 / det, prev = _best.err;
+      tryPair(px, to565((ar * bb - br * ab) * f, (ag * bb - bg * ab) * f, (abl * bb - bbl * ab) * f),
+                  to565((br * aa - ar * ab) * f, (bg * aa - ag * ab) * f, (bbl * aa - abl * ab) * f));
+      if (_best.err >= prev) break;
+    }
+  }
+  const c0 = _best.c0, c1 = _best.c1, idx = _best.idx;
+  out[o] = c0 & 255; out[o + 1] = c0 >> 8; out[o + 2] = c1 & 255; out[o + 3] = c1 >> 8;
+  for (let r = 0; r < 4; r++) out[o + 4 + r] = idx[4 * r] | idx[4 * r + 1] << 2 | idx[4 * r + 2] << 4 | idx[4 * r + 3] << 6;
+}
+
+const _bp = new Int32Array(8), _bi = new Uint8Array(16), _bbest = new Uint8Array(16);
+const W8 = [1, 0, 6 / 7, 5 / 7, 4 / 7, 3 / 7, 2 / 7, 1 / 7];
+function bc4Error(v, a0, a1, idx) {
+  bc4Palette(a0, a1, false, _bp);
+  let err = 0;
+  for (let i = 0; i < 16; i++) {
+    let bd = 1e9, bi = 0;
+    for (let k = 0; k < 8; k++) { const d = v[i] - _bp[k], dd = d * d; if (dd < bd) { bd = dd; bi = k; } }
+    idx[i] = bi; err += bd;
+  }
+  return err;
+}
+function encodeBC4Block(v, out, o, hq) {
+  let mn = 255, mx = 0;
+  for (let i = 0; i < 16; i++) { if (v[i] < mn) mn = v[i]; if (v[i] > mx) mx = v[i]; }
+  if (mn === mx) { out[o] = mn; out[o + 1] = mn; out.fill(0, o + 2, o + 8); return; }
+  let A0 = mx, A1 = mn, best = bc4Error(v, mx, mn, _bbest);
+  if (hq) for (let it = 0; it < 4; it++) {
+    let aa = 0, bb = 0, ab = 0, ax = 0, bx = 0;
+    for (let i = 0; i < 16; i++) { const w = W8[_bbest[i]], u = 1 - w; aa += w * w; bb += u * u; ab += w * u; ax += w * v[i]; bx += u * v[i]; }
+    const det = aa * bb - ab * ab;
+    if (Math.abs(det) < 1e-6) break;
+    let a0 = Math.round((ax * bb - bx * ab) / det), a1 = Math.round((bx * aa - ax * ab) / det);
+    a0 = a0 < 0 ? 0 : a0 > 255 ? 255 : a0; a1 = a1 < 0 ? 0 : a1 > 255 ? 255 : a1;
+    if (a0 < a1) [a0, a1] = [a1, a0];
+    if (a0 === a1) break;
+    const e = bc4Error(v, a0, a1, _bi);
+    if (e >= best) break;
+    best = e; A0 = a0; A1 = a1; _bbest.set(_bi);
+  }
+  let n6 = 255, x6 = 0, ext = false;
+  for (let i = 0; i < 16; i++) { const x = v[i]; if (x === 0 || x === 255) ext = true; else { if (x < n6) n6 = x; if (x > x6) x6 = x; } }
+  if (ext) {
+    if (n6 > x6) n6 = x6 = 0;
+    const e = bc4Error(v, n6, x6, _bi);
+    if (e < best) { best = e; A0 = n6; A1 = x6; _bbest.set(_bi); }
+  }
+  out[o] = A0; out[o + 1] = A1;
+  let lo = 0, hi = 0;
+  for (let i = 0; i < 8; i++) { lo |= _bbest[i] << (3 * i); hi |= _bbest[i + 8] << (3 * i); }
+  out[o + 2] = lo & 255; out[o + 3] = (lo >> 8) & 255; out[o + 4] = (lo >> 16) & 255;
+  out[o + 5] = hi & 255; out[o + 6] = (hi >> 8) & 255; out[o + 7] = (hi >> 16) & 255;
+}
+
+const BLOCK_SIZE = { BC1: 8, BC3: 16, BC4: 8, BC5: 16 };
+function encodeLevel(img, w, h, fmt, hq) {
+  const bw = (w + 3) >> 2, bh = (h + 3) >> 2, bs = BLOCK_SIZE[fmt];
+  const out = new Uint8Array(bw * bh * bs), px = new Uint8Array(64), va = new Uint8Array(16), vb = new Uint8Array(16);
+  const iters = hq ? 6 : 1;
+  let o = 0;
+  for (let by = 0; by < bh; by++) for (let bx = 0; bx < bw; bx++, o += bs) {
+    for (let r = 0; r < 4; r++) {
+      const y = Math.min(by * 4 + r, h - 1);
+      for (let c = 0; c < 4; c++) {
+        const x = Math.min(bx * 4 + c, w - 1), s = (y * w + x) * 4, d = (r * 4 + c) * 4;
+        px[d] = img[s]; px[d + 1] = img[s + 1]; px[d + 2] = img[s + 2]; px[d + 3] = img[s + 3];
+      }
+    }
+    if (fmt === 'BC1') encodeColorBlock(px, out, o, iters);
+    else if (fmt === 'BC3') { for (let i = 0; i < 16; i++) va[i] = px[4 * i + 3]; encodeBC4Block(va, out, o, hq); encodeColorBlock(px, out, o + 8, iters); }
+    else if (fmt === 'BC4') { for (let i = 0; i < 16; i++) va[i] = px[4 * i]; encodeBC4Block(va, out, o, hq); }
+    else { for (let i = 0; i < 16; i++) { va[i] = px[4 * i]; vb[i] = px[4 * i + 1]; } encodeBC4Block(va, out, o, hq); encodeBC4Block(vb, out, o + 8, hq); }
+  }
+  return out;
+}
+
+/* BC4 sources: grey images keep their value, coloured ones become luminance */
+function prepare(rgba, w, h, fmt) {
+  const img = new Uint8Array(rgba);
+  if (fmt === 'BC4') for (let i = 0; i < img.length; i += 4) {
+    const r = img[i], g = img[i + 1], b = img[i + 2];
+    const y = r === g && g === b ? r : Math.round(0.2126 * r + 0.7152 * g + 0.0722 * b);
+    img[i] = img[i + 1] = img[i + 2] = y; img[i + 3] = 255;
+  }
+  return img;
+}
+
+let S2L = null, L2S = null;
+function initGamma() {
+  if (S2L) return;
+  S2L = new Float32Array(256); L2S = new Uint8Array(4096);
+  for (let i = 0; i < 256; i++) { const c = i / 255; S2L[i] = c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+  for (let i = 0; i < 4096; i++) { const l = i / 4095, s = l <= 0.0031308 ? l * 12.92 : 1.055 * Math.pow(l, 1 / 2.4) - 0.055; L2S[i] = Math.round(s * 255); }
+}
+function downsample(src, w, h, mode) {
+  const nw = Math.max(1, w >> 1), nh = Math.max(1, h >> 1), dst = new Uint8Array(nw * nh * 4);
+  for (let y = 0; y < nh; y++) {
+    const y0 = Math.min(2 * y, h - 1), y1 = Math.min(2 * y + 1, h - 1);
+    for (let x = 0; x < nw; x++) {
+      const x0 = Math.min(2 * x, w - 1), x1 = Math.min(2 * x + 1, w - 1);
+      const p = [(y0 * w + x0) * 4, (y0 * w + x1) * 4, (y1 * w + x0) * 4, (y1 * w + x1) * 4], d = (y * nw + x) * 4;
+      if (mode === 'normal') {
+        let sx = 0, sy = 0, sz = 0;
+        for (const q of p) {
+          const nx = src[q] / 127.5 - 1, ny = src[q + 1] / 127.5 - 1;
+          sx += nx; sy += ny; sz += Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny));
+        }
+        const l = Math.hypot(sx, sy, sz) || 1;
+        dst[d] = Math.round((sx / l * 0.5 + 0.5) * 255); dst[d + 1] = Math.round((sy / l * 0.5 + 0.5) * 255);
+        dst[d + 2] = Math.round((sz / l * 0.5 + 0.5) * 255);
+      } else if (mode === 'srgb') {
+        for (let c = 0; c < 3; c++) dst[d + c] = L2S[Math.round((S2L[src[p[0] + c]] + S2L[src[p[1] + c]] + S2L[src[p[2] + c]] + S2L[src[p[3] + c]]) * 1023.75)];
+      } else {
+        for (let c = 0; c < 3; c++) dst[d + c] = (src[p[0] + c] + src[p[1] + c] + src[p[2] + c] + src[p[3] + c] + 2) >> 2;
+      }
+      dst[d + 3] = (src[p[0] + 3] + src[p[1] + 3] + src[p[2] + 3] + src[p[3] + 3] + 2) >> 2;
+    }
+  }
+  return dst;
+}
+
+const FOURCC_OUT = { BC1: 'DXT1', BC3: 'DXT5', BC4: 'ATI1', BC5: 'ATI2' };
+function buildDDS(w, h, fmt, levels) {
+  const hdr = new Uint8Array(128), dv = new DataView(hdr.buffer), many = levels.length > 1;
+  dv.setUint32(0, 0x20534444, true); dv.setUint32(4, 124, true);
+  dv.setUint32(8, 0x1 | 0x2 | 0x4 | 0x1000 | 0x80000 | (many ? 0x20000 : 0), true);
+  dv.setUint32(12, h, true); dv.setUint32(16, w, true); dv.setUint32(20, levels[0].length, true);
+  dv.setUint32(28, levels.length, true);
+  dv.setUint32(76, 32, true); dv.setUint32(80, 0x4, true);
+  for (let i = 0; i < 4; i++) hdr[84 + i] = FOURCC_OUT[fmt].charCodeAt(i);
+  dv.setUint32(108, 0x1000 | (many ? 0x400008 : 0), true);
+  return concatBytes([hdr, ...levels]);
+}
+
+/* ------------------------------------------------------------ PNG */
+function paeth(a, b, c) {
+  const p = a + b - c, pa = Math.abs(p - a), pb = Math.abs(p - b), pc = Math.abs(p - c);
+  return pa <= pb && pa <= pc ? a : pb <= pc ? b : c;
+}
+const ADAM7 = [[0, 0, 8, 8], [4, 0, 8, 8], [0, 4, 4, 8], [2, 0, 4, 4], [0, 2, 2, 4], [1, 0, 2, 2], [0, 1, 1, 2]];
+async function decodePNG(u8) {
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  if (u8.length < 33 || dv.getUint32(0) !== 0x89504E47) throw new CodecError('not a PNG file');
+  let pos = 8, w = 0, h = 0, depth = 8, ct = 6, il = 0, plte = null, trns = null;
+  const idat = [];
+  while (pos + 8 <= u8.length) {
+    const len = dv.getUint32(pos), type = String.fromCharCode(u8[pos + 4], u8[pos + 5], u8[pos + 6], u8[pos + 7]);
+    const d = u8.subarray(pos + 8, pos + 8 + len);
+    pos += 12 + len;
+    if (type === 'IHDR') {
+      w = (d[0] << 24 | d[1] << 16 | d[2] << 8 | d[3]) >>> 0; h = (d[4] << 24 | d[5] << 16 | d[6] << 8 | d[7]) >>> 0;
+      depth = d[8]; ct = d[9]; il = d[12];
+    }
+    else if (type === 'PLTE') plte = d;
+    else if (type === 'tRNS') trns = d;
+    else if (type === 'IDAT') idat.push(d);
+    else if (type === 'IEND') break;
+  }
+  const chans = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 }[ct];
+  if (!chans || !w || !h) throw new CodecError('unsupported PNG layout');
+  const raw = await inflate(concatBytes(idat), 'deflate');
+  const bitsPP = chans * depth, bpp = Math.max(1, bitsPP >> 3), maxv = (1 << depth) - 1;
+  const out = new Uint8Array(w * h * 4);
+  const sample = (row, i) => depth === 8 ? row[i] : depth === 16 ? (row[2 * i] << 8 | row[2 * i + 1])
+    : (row[(i * depth) >> 3] >> (8 - depth - ((i * depth) & 7))) & maxv;
+  const to8 = v => depth === 8 ? v : depth === 16 ? v >> 8 : Math.round(v * 255 / maxv);
+  let keyG = -1, keyR = -1, keyGr = -1, keyB = -1;
+  if (trns && ct === 0) keyG = trns[0] << 8 | trns[1];
+  if (trns && ct === 2) { keyR = trns[0] << 8 | trns[1]; keyGr = trns[2] << 8 | trns[3]; keyB = trns[4] << 8 | trns[5]; }
+  let rp = 0;
+  for (const [x0, y0, dx, dy] of il ? ADAM7 : [[0, 0, 1, 1]]) {
+    const pw = Math.ceil((w - x0) / dx), ph = Math.ceil((h - y0) / dy);
+    if (pw <= 0 || ph <= 0) continue;
+    const rb = Math.ceil(pw * bitsPP / 8);
+    let prev = new Uint8Array(rb);
+    for (let py = 0; py < ph; py++) {
+      if (rp + 1 + rb > raw.length) throw new CodecError('PNG data is truncated');
+      const f = raw[rp++], cur = raw.subarray(rp, rp + rb); rp += rb;
+      if (f === 1) for (let i = bpp; i < rb; i++) cur[i] += cur[i - bpp];
+      else if (f === 2) for (let i = 0; i < rb; i++) cur[i] += prev[i];
+      else if (f === 3) for (let i = 0; i < rb; i++) cur[i] += ((i >= bpp ? cur[i - bpp] : 0) + prev[i]) >> 1;
+      else if (f === 4) for (let i = 0; i < rb; i++) cur[i] += paeth(i >= bpp ? cur[i - bpp] : 0, prev[i], i >= bpp ? prev[i - bpp] : 0);
+      const y = y0 + py * dy;
+      for (let px = 0; px < pw; px++) {
+        const d = (y * w + x0 + px * dx) * 4, s = px * chans;
+        if (ct === 6) { out[d] = to8(sample(cur, s)); out[d + 1] = to8(sample(cur, s + 1)); out[d + 2] = to8(sample(cur, s + 2)); out[d + 3] = to8(sample(cur, s + 3)); }
+        else if (ct === 2) {
+          const r = sample(cur, s), g = sample(cur, s + 1), b = sample(cur, s + 2);
+          out[d] = to8(r); out[d + 1] = to8(g); out[d + 2] = to8(b); out[d + 3] = r === keyR && g === keyGr && b === keyB ? 0 : 255;
+        } else if (ct === 0) { const g = sample(cur, s), v = to8(g); out[d] = out[d + 1] = out[d + 2] = v; out[d + 3] = g === keyG ? 0 : 255; }
+        else if (ct === 4) { const v = to8(sample(cur, s)); out[d] = out[d + 1] = out[d + 2] = v; out[d + 3] = to8(sample(cur, s + 1)); }
+        else {
+          const k = sample(cur, s);
+          if (!plte || 3 * k + 2 >= plte.length) throw new CodecError('PNG palette index out of range');
+          out[d] = plte[3 * k]; out[d + 1] = plte[3 * k + 1]; out[d + 2] = plte[3 * k + 2]; out[d + 3] = trns && k < trns.length ? trns[k] : 255;
+        }
+      }
+      prev = cur;
+    }
+  }
+  return { w, h, rgba: out, meta: { fmt: `PNG ${depth}-bit`, container: 'PNG' } };
+}
+
+function analyze(rgba) {
+  let alpha = false, gray = true;
+  for (let i = 0; i < rgba.length; i += 4) {
+    if (rgba[i + 3] !== 255) alpha = true;
+    if (gray && (rgba[i] !== rgba[i + 1] || rgba[i] !== rgba[i + 2])) gray = false;
+    if (alpha && !gray) break;
+  }
+  return { alpha, gray };
+}
+function pack(rgba, order) {
+  const n = rgba.length >> 2, k = order.length;
+  if (k === 4 && order[0] === 0 && order[1] === 1 && order[2] === 2) return rgba;
+  const out = new Uint8Array(n * k);
+  for (let i = 0; i < n; i++) for (let j = 0; j < k; j++) out[i * k + j] = rgba[i * 4 + order[j]];
+  return out;
+}
+async function encodePNG(rgba, w, h, forceRGBA) {
+  const { alpha, gray } = forceRGBA ? { alpha: true, gray: false } : analyze(rgba);
+  const order = gray ? (alpha ? [0, 3] : [0]) : (alpha ? [0, 1, 2, 3] : [0, 1, 2]);
+  const ct = gray ? (alpha ? 4 : 0) : (alpha ? 6 : 2), k = order.length, stride = w * k;
+  const pix = pack(rgba, order), raw = new Uint8Array((stride + 1) * h);
+  const cand = [0, 1, 2, 3, 4].map(() => new Uint8Array(stride));
+  let prev = new Uint8Array(stride);
+  for (let y = 0; y < h; y++) {
+    const cur = pix.subarray(y * stride, (y + 1) * stride);
+    const c0 = cand[0], c1 = cand[1], c2 = cand[2], c3 = cand[3], c4 = cand[4];
+    for (let i = 0; i < stride; i++) {
+      const a = i >= k ? cur[i - k] : 0, b = prev[i], c = i >= k ? prev[i - k] : 0, x = cur[i];
+      c0[i] = x; c1[i] = x - a; c2[i] = x - b; c3[i] = x - ((a + b) >> 1); c4[i] = x - paeth(a, b, c);
+    }
+    let bf = 0, bs = Infinity;
+    for (let f = 0; f < 5; f++) {
+      const c = cand[f]; let s = 0;
+      for (let i = 0; i < stride && s < bs; i++) s += c[i] < 128 ? c[i] : 256 - c[i];
+      if (s < bs) { bs = s; bf = f; }
+    }
+    raw[y * (stride + 1)] = bf; raw.set(cand[bf], y * (stride + 1) + 1);
+    prev = cur;
+  }
+  const chunk = (type, data) => {
+    const t = new Uint8Array([...type].map(c => c.charCodeAt(0))), b = new Uint8Array(12 + data.length), dv = new DataView(b.buffer);
+    dv.setUint32(0, data.length); b.set(t, 4); b.set(data, 8); dv.setUint32(8 + data.length, crc32(data, crc32(t)));
+    return b;
+  };
+  const ihdr = new Uint8Array(13), dv = new DataView(ihdr.buffer);
+  dv.setUint32(0, w); dv.setUint32(4, h); ihdr[8] = 8; ihdr[9] = ct;
+  return concatBytes([new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', await deflate(raw, 'deflate')), chunk('IEND', new Uint8Array(0))]);
+}
+
+/* ------------------------------------------------------------ TGA */
+function decodeTGA(u8) {
+  if (u8.length < 18) throw new CodecError('not a TGA file');
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  const idLen = u8[0], cmType = u8[1], type = u8[2], cmFirst = dv.getUint16(3, true), cmLen = dv.getUint16(5, true), cmDepth = u8[7];
+  const w = dv.getUint16(12, true), h = dv.getUint16(14, true), bpp = u8[16], desc = u8[17], alphaBits = desc & 15;
+  const base = type & 7, rle = type >= 9;
+  if (![1, 2, 3].includes(base) || !w || !h) throw new CodecError('unsupported TGA type');
+  let pos = 18 + idLen;
+  const read16 = (v, out, o, useAlpha) => {
+    out[o] = E5[(v >> 10) & 31]; out[o + 1] = E5[(v >> 5) & 31]; out[o + 2] = E5[v & 31];
+    out[o + 3] = useAlpha ? (v & 0x8000 ? 255 : 0) : 255;
+  };
+  let pal = null;
+  if (cmType === 1) {
+    const eb = Math.ceil(cmDepth / 8); pal = new Uint8Array((cmFirst + cmLen) * 4);
+    for (let i = 0; i < cmLen; i++, pos += eb) {
+      const o = (cmFirst + i) * 4;
+      if (eb === 2) read16(u8[pos] | u8[pos + 1] << 8, pal, o, cmDepth === 16 && alphaBits > 0);
+      else { pal[o] = u8[pos + 2]; pal[o + 1] = u8[pos + 1]; pal[o + 2] = u8[pos]; pal[o + 3] = eb === 4 ? u8[pos + 3] : 255; }
+    }
+  }
+  const pb = Math.ceil(bpp / 8), n = w * h, tmp = new Uint8Array(n * 4);
+  const put = (p, o) => {
+    if (base === 1) { const k = pb === 2 ? u8[p] | u8[p + 1] << 8 : u8[p]; const s = k * 4; tmp[o] = pal[s]; tmp[o + 1] = pal[s + 1]; tmp[o + 2] = pal[s + 2]; tmp[o + 3] = pal[s + 3]; }
+    else if (base === 3) { tmp[o] = tmp[o + 1] = tmp[o + 2] = u8[p]; tmp[o + 3] = pb === 2 ? u8[p + 1] : 255; }
+    else if (pb === 2) read16(u8[p] | u8[p + 1] << 8, tmp, o, alphaBits > 0);
+    else { tmp[o] = u8[p + 2]; tmp[o + 1] = u8[p + 1]; tmp[o + 2] = u8[p]; tmp[o + 3] = pb === 4 ? u8[p + 3] : 255; }
+  };
+  if (base === 1 && !pal) throw new CodecError('TGA colour map missing');
+  let i = 0;
+  if (!rle) { if (pos + n * pb > u8.length) throw new CodecError('TGA is truncated'); for (; i < n; i++, pos += pb) put(pos, i * 4); }
+  else while (i < n) {
+    if (pos >= u8.length) throw new CodecError('TGA is truncated');
+    const hd = u8[pos++], cnt = (hd & 127) + 1;
+    if (hd & 128) { for (let j = 0; j < cnt && i < n; j++, i++) put(pos, i * 4); pos += pb; }
+    else for (let j = 0; j < cnt && i < n; j++, i++, pos += pb) put(pos, i * 4);
+  }
+  if (base === 2 && pb === 4 && alphaBits === 0) {              // 32-bit files that declare no alpha
+    let allZero = true; for (let k = 3; k < tmp.length; k += 4) if (tmp[k]) { allZero = false; break; }
+    if (allZero) for (let k = 3; k < tmp.length; k += 4) tmp[k] = 255;
+  }
+  const top = desc & 0x20, right = desc & 0x10;
+  if (top && !right) return { w, h, rgba: tmp, meta: { fmt: `TGA ${bpp}-bit`, container: 'TGA' } };
+  const out = new Uint8Array(n * 4);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const sy = top ? y : h - 1 - y, sx = right ? w - 1 - x : x, s = (sy * w + sx) * 4, d = (y * w + x) * 4;
+    out[d] = tmp[s]; out[d + 1] = tmp[s + 1]; out[d + 2] = tmp[s + 2]; out[d + 3] = tmp[s + 3];
+  }
+  return { w, h, rgba: out, meta: { fmt: `TGA ${bpp}-bit`, container: 'TGA' } };
+}
+function encodeTGA(rgba, w, h, forceRGBA) {
+  if (w > 65535 || h > 65535) throw new CodecError('image too large for TGA');
+  const { alpha, gray } = forceRGBA ? { alpha: true, gray: false } : analyze(rgba);
+  const order = gray && !alpha ? [0] : alpha ? [2, 1, 0, 3] : [2, 1, 0], k = order.length;
+  const pix = pack(rgba, order), stride = w * k;
+  const out = new Uint8Array(18 + pix.length + 26), dv = new DataView(out.buffer);
+  out[2] = k === 1 ? 3 : 2; dv.setUint16(12, w, true); dv.setUint16(14, h, true); out[16] = k * 8; out[17] = k === 4 ? 8 : 0;
+  for (let y = 0; y < h; y++) out.set(pix.subarray((h - 1 - y) * stride, (h - y) * stride), 18 + y * stride);
+  out.set([...'TRUEVISION-XFILE.'].map(c => c.charCodeAt(0)), 18 + pix.length + 8);
+  return out;
+}
+
+/* ------------------------------------------------------------ ZIP */
+async function readZip(u8) {
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  let e = -1;
+  for (let i = u8.length - 22; i >= Math.max(0, u8.length - 65557); i--) if (dv.getUint32(i, true) === 0x06054b50) { e = i; break; }
+  if (e < 0) throw new CodecError('not a zip file');
+  const count = dv.getUint16(e + 10, true), dec = new TextDecoder(), out = [];
+  let p = dv.getUint32(e + 16, true);
+  for (let i = 0; i < count; i++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    const flags = dv.getUint16(p + 8, true), method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
+    const nlen = dv.getUint16(p + 28, true), elen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true), loff = dv.getUint32(p + 42, true);
+    const name = dec.decode(u8.subarray(p + 46, p + 46 + nlen));
+    p += 46 + nlen + elen + clen;
+    if (name.endsWith('/') || flags & 1) continue;
+    const ds = loff + 30 + dv.getUint16(loff + 26, true) + dv.getUint16(loff + 28, true), raw = u8.subarray(ds, ds + csize);
+    if (method === 0) out.push({ name, data: raw.slice() });
+    else if (method === 8) out.push({ name, data: await inflate(raw, 'deflate-raw') });
+  }
+  return out;
+}
+async function makeZip(files) {
+  const enc = new TextEncoder(), parts = [], central = [], now = new Date();
+  const time = now.getHours() << 11 | now.getMinutes() << 5 | now.getSeconds() >> 1;
+  const date = (now.getFullYear() - 1980) << 9 | (now.getMonth() + 1) << 5 | now.getDate();
+  let off = 0;
+  for (const f of files) {
+    const name = enc.encode(f.name), crc = crc32(f.data);
+    let data = await deflate(f.data, 'deflate-raw'), method = 8;
+    if (data.length >= f.data.length) { data = f.data; method = 0; }
+    const L = new Uint8Array(30 + name.length), l = new DataView(L.buffer);
+    l.setUint32(0, 0x04034b50, true); l.setUint16(4, 20, true); l.setUint16(6, 0x800, true); l.setUint16(8, method, true);
+    l.setUint16(10, time, true); l.setUint16(12, date, true); l.setUint32(14, crc, true);
+    l.setUint32(18, data.length, true); l.setUint32(22, f.data.length, true); l.setUint16(26, name.length, true); L.set(name, 30);
+    const C = new Uint8Array(46 + name.length), c = new DataView(C.buffer);
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x800, true);
+    c.setUint16(10, method, true); c.setUint16(12, time, true); c.setUint16(14, date, true); c.setUint32(16, crc, true);
+    c.setUint32(20, data.length, true); c.setUint32(24, f.data.length, true); c.setUint16(28, name.length, true);
+    c.setUint32(42, off, true); C.set(name, 46);
+    parts.push(L, data); central.push(C); off += L.length + data.length;
+  }
+  const cdSize = central.reduce((s, x) => s + x.length, 0), E = new Uint8Array(22), e = new DataView(E.buffer);
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true);
+  e.setUint32(12, cdSize, true); e.setUint32(16, off, true);
+  return new Blob([...parts, ...central, E], { type: 'application/zip' });
+}
+
+/* ------------------------------------------------------------ tasks */
+async function decodeBitmap(u8) {
+  const bmp = await createImageBitmap(new Blob([u8]), { premultiplyAlpha: 'none', colorSpaceConversion: 'none' });
+  const cv = new OffscreenCanvas(bmp.width, bmp.height), ctx = cv.getContext('2d');
+  ctx.drawImage(bmp, 0, 0);
+  const d = ctx.getImageData(0, 0, bmp.width, bmp.height).data;
+  return { w: bmp.width, h: bmp.height, rgba: new Uint8Array(d.buffer), meta: { fmt: 'image', container: 'IMG' } };
+}
+function encodeDDSFull(t) {
+  initGamma();
+  const img = prepare(t.rgba, t.w, t.h, t.fmt);
+  const mode = t.kind === 'normal' ? 'normal' : t.kind === 'srgb' && t.gamma ? 'srgb' : 'linear';
+  const levels = [];
+  let cur = img, w = t.w, h = t.h;
+  for (;;) {
+    levels.push(encodeLevel(cur, w, h, t.fmt, t.hq));
+    if (!t.mips || (w === 1 && h === 1)) break;
+    cur = downsample(cur, w, h, mode); w = Math.max(1, w >> 1); h = Math.max(1, h >> 1);
+  }
+  return { dds: buildDDS(t.w, t.h, t.fmt, levels), mips: levels.length };
+}
+async function codecTask(t) {
+  switch (t.op) {
+    case 'decode': {
+      const ext = (t.name.split('.').pop() || '').toLowerCase(), b = t.bytes;
+      let r;
+      if (ext === 'dds' || (b[0] === 0x44 && b[1] === 0x44 && b[2] === 0x53 && b[3] === 0x20)) r = decodeDDS(b);
+      else if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47) {
+        try { r = await decodePNG(b); } catch (e) { r = await decodeBitmap(b); }
+      }
+      else if (ext === 'tga') r = decodeTGA(b);
+      else r = await decodeBitmap(b);
+      return { result: r, transfer: [r.rgba.buffer] };
+    }
+    case 'dds': { const r = encodeDDSFull(t); return { result: r, transfer: [r.dds.buffer] }; }
+    case 'preview': {
+      const img = prepare(t.rgba, t.w, t.h, t.fmt), enc = encodeLevel(img, t.w, t.h, t.fmt, t.hq);
+      const rgba = decodeBlocks(enc, 0, t.w, t.h, BLOCK_SIZE[t.fmt], BLOCK_DEC[t.fmt][1]);
+      const ch = { BC1: [0, 1, 2], BC3: [0, 1, 2, 3], BC4: [0], BC5: [0, 1] }[t.fmt];
+      let se = 0, cnt = 0;
+      for (let i = 0; i < rgba.length; i += 4) for (const c of ch) { const d = rgba[i + c] - img[i + c]; se += d * d; cnt++; }
+      const psnr = se ? 10 * Math.log10(255 * 255 * cnt / se) : Infinity;
+      return { result: { rgba, psnr }, transfer: [rgba.buffer] };
+    }
+    case 'png': { const b = await encodePNG(t.rgba, t.w, t.h, t.force); return { result: b, transfer: [b.buffer] }; }
+    case 'tga': { const b = encodeTGA(t.rgba, t.w, t.h, t.force); return { result: b, transfer: [b.buffer] }; }
+    case 'ping': return { result: 'pong' };
+  }
+  throw new CodecError('unknown task ' + t.op);
+}
+</script>
+
+<!-- ===================================================================== UI -->
+<script>
+'use strict';
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* ---------------- slot definitions (official Stadium car guide) ---------------- */
+const SETS = [
+  { id: 'SKIN', slots: [
+    { id: 'Skin_B', fmt: 'BC1', kind: 'srgb', what: 'Base colour', tip: 'Paint of the car body (RGB). Alpha is not stored.' },
+    { id: 'Skin_R', fmt: 'BC5', kind: 'linear', what: 'Roughness · metalness', tip: 'Red = roughness, green = metalness. Blue is not stored.' },
+    { id: 'Skin_CoatR', fmt: 'BC4', kind: 'linear', what: 'Clear coat', tip: 'Greyscale varnish / glitter layer. Optional: without it the game derives the coat from roughness and metalness.' },
+    { id: 'Skin_DirtMask', fmt: 'BC4', kind: 'linear', what: 'Dirt mask', tip: 'Greyscale mask of where dirt builds up.' }] },
+  { id: 'DETAILS', slots: [
+    { id: 'Details_B', fmt: 'BC1', kind: 'srgb', what: 'Base colour', tip: 'Colour of the detail parts (RGB).' },
+    { id: 'Details_R', fmt: 'BC5', kind: 'linear', what: 'Roughness · metalness', tip: 'Red = roughness, green = metalness.' },
+    { id: 'Details_I', fmt: 'BC3', kind: 'srgb', what: 'Self-illumination', tip: 'RGB = light colour, alpha = grey codes that tell the game what each light is for.' },
+    { id: 'Details_N', fmt: 'BC5', kind: 'normal', what: 'Normal map', tip: 'OpenGL normals (Y+, green up). Only red/green are stored, blue is rebuilt by the game.' },
+    { id: 'Details_DirtMask', fmt: 'BC4', kind: 'linear', what: 'Dirt mask', tip: 'Greyscale dirt mask.' }] },
+  { id: 'WHEELS', slots: [
+    { id: 'Wheels_B', fmt: 'BC1', kind: 'srgb', what: 'Base colour', tip: 'Colour of the wheels (RGB).' },
+    { id: 'Wheels_R', fmt: 'BC5', kind: 'linear', what: 'Roughness · metalness', tip: 'Red = roughness, green = metalness.' },
+    { id: 'Wheels_N', fmt: 'BC5', kind: 'normal', what: 'Normal map', tip: 'OpenGL normals (Y+, green up).' },
+    { id: 'Wheels_DirtMask', fmt: 'BC4', kind: 'linear', what: 'Dirt mask', tip: 'Greyscale dirt mask.' }] },
+  { id: 'GLASS', slots: [
+    { id: 'Glass_D', fmt: 'BC1', kind: 'srgb', what: 'Tint · opacity', tip: 'Colour tints the glass, brightness sets how opaque it is.' },
+    { id: 'Glass_I', fmt: 'BC3', kind: 'srgb', what: 'Self-illumination', tip: 'RGB + alpha like Details_I. The guide lists BC5 here, but BC5 only stores red and green, so BC3 is the default. Switch to BC5 if you only use red/green.' }] },
+  { id: 'ICON', slots: [
+    { id: 'Icon', fmt: 'TGA', kind: 'icon', what: 'Skin icon', tip: 'Shown in the in-game skin list. Saved as Icon.tga.' }] },
+];
+const SLOTS = SETS.flatMap(s => s.slots), SLOT = Object.fromEntries(SLOTS.map(s => [s.id, s]));
+const MATCH_ORDER = [...SLOTS].sort((a, b) => b.id.length - a.id.length);
+const IMG_EXT = ['png', 'tga', 'dds', 'jpg', 'jpeg', 'webp', 'bmp'];
+
+/* ---------------- state ---------------- */
+const state = { slots: {}, fmt: {}, others: [], sel: null };
+const view = { chan: 'rgba', src: 'source', z: 1, x: 0, y: 0, w: 0, h: 0, key: '' };
+const DEF_OPTS = { name: 'MySkin', mips: true, gamma: true, keep: true, ask: true, quality: 'high', extract: 'png', rgba: false };
+let opts = { ...DEF_OPTS };
+try { Object.assign(opts, JSON.parse(localStorage.getItem('tmSkinConverter.opts') || '{}')); } catch (e) {}
+const saveOpts = () => { try { localStorage.setItem('tmSkinConverter.opts', JSON.stringify(opts)); } catch (e) {} };
+const canPick = typeof window.showSaveFilePicker === 'function';
+
+/* ---------------- worker pool ---------------- */
+const Pool = {
+  workers: [], queue: [], ok: false, seq: 0,
+  async init() {
+    try {
+      const tail = `self.onmessage = async e => { try { const r = await codecTask(e.data.task); self.postMessage({ id: e.data.id, ok: true, result: r.result }, r.transfer || []); } catch (err) { self.postMessage({ id: e.data.id, ok: false, error: String(err && err.message || err) }); } };`;
+      const url = URL.createObjectURL(new Blob([$('#codec').textContent, '\n', tail], { type: 'text/javascript' }));
+      const n = Math.max(1, Math.min(8, (navigator.hardwareConcurrency || 4) - 1));
+      for (let i = 0; i < n; i++) {
+        const w = new Worker(url);
+        w.job = null;
+        w.onmessage = e => {
+          const job = w.job; w.job = null;
+          if (job) e.data.ok ? job.res(e.data.result) : job.rej(new Error(e.data.error));
+          this.pump();
+        };
+        w.onerror = e => { e.preventDefault(); const job = w.job; w.job = null; if (job) job.rej(new Error(e.message || 'worker error')); this.pump(); };
+        this.workers.push(w);
+      }
+      this.ok = true;
+      await Promise.race([this.run({ op: 'ping' }), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000))]);
+    } catch (e) {
+      this.workers.forEach(w => w.terminate()); this.workers = []; this.ok = false;
+      const q = this.queue.splice(0); q.forEach(j => this.local(j));
+    }
+  },
+  local(job) { codecTask(job.task).then(r => job.res(r.result), job.rej); },
+  run(task) {
+    return new Promise((res, rej) => {
+      const job = { task, res, rej };
+      if (!this.ok) return this.local(job);
+      this.queue.push(job); this.pump();
+    });
+  },
+  pump() {
+    for (const w of this.workers) {
+      if (w.job || !this.queue.length) continue;
+      w.job = this.queue.shift();
+      w.postMessage({ id: ++this.seq, task: w.job.task });
+    }
+  },
+};
+
+/* ---------------- small UI helpers ---------------- */
+let toastT;
+function toast(msg, err = false) {
+  const t = $('#toast'); t.textContent = msg; t.classList.toggle('err', err); t.classList.add('on');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), err ? 6000 : 3200);
+}
+const busy = {
+  n: 0, total: 0,
+  show(title, total) { this.n = 0; this.total = total; $('#busyTitle').textContent = title; $('#busyText').textContent = ''; $('#busyBar').style.width = '0%'; $('#busy').classList.add('on'); },
+  tick(text) { this.n++; $('#busyText').textContent = text || ''; $('#busyBar').style.width = (100 * this.n / Math.max(1, this.total)) + '%'; },
+  hide() { $('#busy').classList.remove('on'); },
+};
+const tip = $('#tip');
+document.addEventListener('mouseover', e => {
+  const el = e.target.closest('[data-tip]');
+  if (!el) { tip.classList.remove('on'); return; }
+  tip.innerHTML = el.dataset.tip;
+  const r = el.getBoundingClientRect(), tw = Math.min(290, tip.offsetWidth || 290);
+  tip.style.left = Math.max(8, Math.min(innerWidth - tw - 8, r.left + r.width / 2 - tw / 2)) + 'px';
+  tip.style.top = (r.bottom + 8 + 120 > innerHeight ? r.top - tip.offsetHeight - 8 : r.bottom + 8) + 'px';
+  tip.classList.add('on');
+});
+function download(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+async function saveZip(blob, name, ask) {
+  if (ask && canPick) {
+    try {
+      const h = await showSaveFilePicker({ suggestedName: name, id: 'tm-skins', startIn: 'documents', types: [{ description: 'ZIP archive', accept: { 'application/zip': ['.zip'] } }] });
+      const w = await h.createWritable(); await w.write(blob); await w.close();
+      return h.name;
+    } catch (e) { if (e.name === 'AbortError') return null; }
+  }
+  download(blob, name); return name;
+}
+const safeName = s => (s || '').trim().replace(/[\\/:*?"<>|]+/g, '_') || 'MySkin';
+const isPOT = n => (n & (n - 1)) === 0;
+const baseName = p => p.split(/[\\/]/).pop();
+const stem = p => baseName(p).replace(/\.[^.]+$/, '');
+const fmtOf = id => state.fmt[id] || SLOT[id].fmt;
+
+function matchSlot(name) {
+  const s = stem(name).toLowerCase();
+  for (const d of MATCH_ORDER) if (s.endsWith(d.id.toLowerCase())) return d.id;
+  return null;
+}
+
+/* ---------------- import ---------------- */
+async function importFiles(files, target = null) {
+  const jobs = [];
+  for (const f of files) {
+    const ext = (f.name.split('.').pop() || '').toLowerCase();
+    try {
+      if (ext === 'zip') {
+        const entries = await readZip(new Uint8Array(await f.arrayBuffer()));
+        for (const e of entries) if (IMG_EXT.includes((e.name.split('.').pop() || '').toLowerCase())) jobs.push({ name: baseName(e.name), from: f.name, bytes: e.data });
+        if (!target && (opts.name === DEF_OPTS.name || !opts.name)) { opts.name = stem(f.name); $('#optName').value = opts.name; saveOpts(); }
+      } else if (IMG_EXT.includes(ext)) jobs.push({ name: f.name, from: null, bytes: new Uint8Array(await f.arrayBuffer()) });
+    } catch (e) { toast(`${f.name}: ${e.message}`, true); }
+  }
+  if (!jobs.length) { toast('No PNG, TGA, DDS or skin zip found.', true); return; }
+  busy.show('READING TEXTURES', jobs.length);
+  const results = await Promise.all(jobs.map(j => Pool.run({ op: 'decode', name: j.name, bytes: j.bytes })
+    .then(r => { busy.tick(j.name); return { j, r }; }, e => { busy.tick(j.name); return { j, err: e.message }; })));
+  busy.hide();
+  const errs = [];
+  let firstSel = null, placed = 0, unsorted = 0;
+  for (const { j, r, err } of results) {
+    if (err) { errs.push(`${j.name}: ${err}`); continue; }
+    const tex = { name: j.name, from: j.from, w: r.w, h: r.h, rgba: r.rgba, meta: r.meta, bytes: r.meta.container === 'DDS' ? j.bytes : null };
+    makeThumb(tex);
+    const id = target || matchSlot(j.name);
+    if (id) { state.slots[id] = tex; placed++; firstSel = firstSel || 'slot:' + id; }
+    else { state.others.push(tex); unsorted++; firstSel = firstSel || 'other:' + (state.others.length - 1); }
+  }
+  if (firstSel) select(firstSel);
+  renderSlots();
+  if (errs.length) toast(`Could not read ${errs.length} file(s):\n` + errs.slice(0, 5).join('\n'), true);
+  else toast(`Loaded ${placed} texture(s)` + (unsorted ? `, ${unsorted} unsorted` : ''));
+}
+
+async function makeThumb(tex) {
+  try {
+    const s = 88, id = new ImageData(new Uint8ClampedArray(tex.rgba.buffer, tex.rgba.byteOffset, tex.rgba.length), tex.w, tex.h);
+    const sc = s / Math.max(tex.w, tex.h);
+    const bmp = await createImageBitmap(id, { resizeWidth: Math.max(1, Math.round(tex.w * sc)), resizeHeight: Math.max(1, Math.round(tex.h * sc)), resizeQuality: 'medium' });
+    const c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height;
+    c.getContext('2d').drawImage(bmp, 0, 0);
+    tex.thumb = c.toDataURL();
+    renderSlots();
+  } catch (e) {}
+}
+
+/* ---------------- slot list ---------------- */
+function texLine(tex, def) {
+  const src = (tex.meta.container === 'DDS' ? tex.meta.fmt + ' · ' : '') + tex.name;
+  let cls = '', warn = '';
+  if (def && def.kind !== 'icon' && (!isPOT(tex.w) || !isPOT(tex.h))) { cls = 'warn'; warn = ' · not power of 2'; }
+  return `<span class="${cls}" title="${esc(tex.name + (tex.from ? ' (from ' + tex.from + ')' : ''))}">${tex.w}×${tex.h}${warn} · ${esc(src)}</span>`;
+}
+function renderSlots() {
+  let html = '';
+  for (const set of SETS) {
+    const filled = set.slots.filter(s => state.slots[s.id]).length;
+    html += `<div class="sec"><h3>${set.id}<em class="${filled === set.slots.length ? 'full' : ''}">${filled}/${set.slots.length}</em></h3>`;
+    for (const d of set.slots) {
+      const t = state.slots[d.id], key = 'slot:' + d.id;
+      const fmtCtl = d.kind === 'icon' ? `<span class="fmt fixed">TGA</span>`
+        : `<select class="fmt" data-fmt="${d.id}" title="DDS format">${['BC1', 'BC3', 'BC4', 'BC5'].map(f => `<option${f === fmtOf(d.id) ? ' selected' : ''}>${f}</option>`).join('')}</select>`;
+      html += `<div class="slot${state.sel === key ? ' on' : ''}" data-key="${key}" data-slot="${d.id}">
+        <div class="thumb${t ? '' : ' empty'}">${t ? (t.thumb ? `<img src="${t.thumb}" alt="">` : '') : '+'}</div>
+        <div class="sinfo"><b>${d.id}<span class="info" data-tip="${esc(d.tip)}" style="display:inline-grid;vertical-align:-2px">i</span></b>
+          ${t ? texLine(t, d) : `<span class="dim">${d.what} · empty</span>`}</div>
+        ${fmtCtl}<button class="xbtn${t ? '' : ' ph'}" data-clear="${d.id}" title="Remove">×</button></div>`;
+    }
+    html += '</div>';
+  }
+  if (state.others.length) {
+    html += `<div class="sec"><h3>UNSORTED<span class="info" data-tip="These files' names don't match a slot. Pick one to move them there; unsorted files are only used for PNG/TGA extraction.">i</span><em>${state.others.length}</em></h3>`;
+    state.others.forEach((t, i) => {
+      const key = 'other:' + i;
+      html += `<div class="slot${state.sel === key ? ' on' : ''}" data-key="${key}">
+        <div class="thumb">${t.thumb ? `<img src="${t.thumb}" alt="">` : ''}</div>
+        <div class="sinfo"><b>${esc(stem(t.name))}</b>${texLine(t, null)}</div>
+        <select class="sel" data-assign="${i}" title="Move to slot"><option value="">Assign…</option>${SLOTS.map(s => `<option>${s.id}</option>`).join('')}</select>
+        <button class="xbtn" data-drop="${i}" title="Remove">×</button></div>`;
+    });
+    html += '</div>';
+  }
+  $('#slotList').innerHTML = html;
+  const n = Object.keys(state.slots).length;
+  $('#loadedCount').textContent = n ? `${n}/${SLOTS.length} SLOTS` : '';
+  const dds = SLOTS.filter(s => s.kind !== 'icon' && state.slots[s.id]).length;
+  $('#exportSummary').textContent = dds ? `${dds} DDS${state.slots.Icon ? ' + ICON' : ''}` : '';
+  updateButtons();
+}
+function updateButtons() {
+  const anyTex = Object.keys(state.slots).length + state.others.length > 0;
+  const anyDDS = SLOTS.some(s => s.kind !== 'icon' && state.slots[s.id]);
+  $('#hdrSkin').disabled = $('#btnExport').disabled = !anyDDS;
+  $('#hdrPng').disabled = $('#hdrTga').disabled = $('#btnExtract').disabled = !anyTex;
+  const cur = current();
+  $('#dlPng').disabled = $('#dlTga').disabled = !cur;
+  $('#dlDds').disabled = !cur || !cur.fmt || cur.fmt === 'TGA';
+  $$('#segSrc button')[1].disabled = !cur || !cur.fmt || cur.fmt === 'TGA';
+}
+
+$('#slotList').addEventListener('click', e => {
+  if (e.target.closest('select')) return;
+  const clr = e.target.closest('[data-clear]');
+  if (clr) { delete state.slots[clr.dataset.clear]; if (state.sel === 'slot:' + clr.dataset.clear) select(null); renderSlots(); return; }
+  const drp = e.target.closest('[data-drop]');
+  if (drp) { state.others.splice(+drp.dataset.drop, 1); select(null); renderSlots(); return; }
+  const row = e.target.closest('.slot');
+  if (!row) return;
+  if (row.dataset.slot && !state.slots[row.dataset.slot]) { pickForSlot = row.dataset.slot; $('#slotIn').click(); return; }
+  select(row.dataset.key);
+});
+$('#slotList').addEventListener('change', e => {
+  const f = e.target.dataset.fmt, a = e.target.dataset.assign;
+  if (f) { state.fmt[f] = e.target.value; if (state.slots[f]) state.slots[f].prev = null; if (state.sel === 'slot:' + f) renderView(); }
+  if (a !== undefined && e.target.value) {
+    const t = state.others.splice(+a, 1)[0], id = e.target.value;
+    if (state.slots[id]) state.others.push(state.slots[id]);
+    state.slots[id] = t; t.prev = null; select('slot:' + id); renderSlots();
+  }
+});
+
+/* ---------------- file inputs + drag & drop ---------------- */
+let pickForSlot = null;
+$('#btnFiles').onclick = () => $('#fileIn').click();
+$('#btnFolder').onclick = () => $('#dirIn').click();
+$('#btnClear').onclick = () => { state.slots = {}; state.others = []; state.fmt = {}; select(null); renderSlots(); };
+$('#fileIn').onchange = e => { const f = [...e.target.files]; e.target.value = ''; if (f.length) importFiles(f); };
+$('#dirIn').onchange = e => { const f = [...e.target.files]; e.target.value = ''; if (f.length) importFiles(f); };
+$('#slotIn').onchange = e => { const f = [...e.target.files]; e.target.value = ''; if (f.length && pickForSlot) importFiles(f.slice(0, 1), pickForSlot); };
+
+async function walkEntry(entry, out) {
+  if (entry.isFile) out.push(await new Promise((res, rej) => entry.file(res, rej)));
+  else if (entry.isDirectory) {
+    const rd = entry.createReader();
+    for (;;) {
+      const batch = await new Promise((res, rej) => rd.readEntries(res, rej));
+      if (!batch.length) break;
+      for (const e of batch) await walkEntry(e, out);
+    }
+  }
+}
+let dragDepth = 0;
+const hasFiles = e => e.dataTransfer && [...e.dataTransfer.types].includes('Files');
+addEventListener('dragenter', e => { if (!hasFiles(e)) return; e.preventDefault(); dragDepth++; $('#dropfx').classList.add('on'); });
+addEventListener('dragleave', e => { if (!hasFiles(e)) return; if (--dragDepth <= 0) { dragDepth = 0; $('#dropfx').classList.remove('on'); } });
+addEventListener('dragover', e => {
+  if (!hasFiles(e)) return; e.preventDefault();
+  $$('.slot.over').forEach(s => s.classList.remove('over'));
+  const row = e.target.closest && e.target.closest('.slot[data-slot]');
+  if (row) row.classList.add('over');
+  $('#dropfx').classList.toggle('on', !row);
+});
+addEventListener('drop', async e => {
+  if (!hasFiles(e)) return;
+  e.preventDefault(); dragDepth = 0; $('#dropfx').classList.remove('on');
+  $$('.slot.over').forEach(s => s.classList.remove('over'));
+  const row = e.target.closest && e.target.closest('.slot[data-slot]');
+  const entries = [...e.dataTransfer.items].filter(i => i.kind === 'file').map(i => i.webkitGetAsEntry && i.webkitGetAsEntry());
+  const plain = [...e.dataTransfer.files];
+  let files = [];
+  if (entries.length && entries.every(Boolean)) { for (const en of entries) await walkEntry(en, files); }
+  else files = plain;
+  if (!files.length) return;
+  if (row) importFiles(files.slice(0, 1), row.dataset.slot); else importFiles(files);
+});
+
+/* ---------------- viewer ---------------- */
+const stage = $('#stage'), art = $('#art'), actx = art.getContext('2d');
+function current() {
+  if (!state.sel) return null;
+  const [kind, k] = state.sel.split(':');
+  if (kind === 'slot') { const tex = state.slots[k]; return tex ? { tex, id: k, fmt: fmtOf(k), def: SLOT[k] } : null; }
+  const tex = state.others[+k]; return tex ? { tex, id: stem(tex.name), fmt: null, def: null } : null;
+}
+function select(key) {
+  state.sel = key;
+  $$('#slotList .slot').forEach(r => r.classList.toggle('on', r.dataset.key === key));
+  view.key = '';
+  renderView();
+  updateButtons();
+}
+let renderToken = 0;
+async function renderView() {
+  const cur = current(), token = ++renderToken;
+  if (!cur) { art.hidden = true; $('#empty').hidden = false; $('#lblL').textContent = $('#lblR').textContent = ''; $('#zoomLbl').textContent = ''; return; }
+  const { tex, fmt } = cur;
+  let rgba = tex.rgba, extra = '';
+  const encoded = view.src === 'encoded' && fmt && fmt !== 'TGA';
+  if (encoded) {
+    const key = fmt + '|' + opts.quality;
+    if (!tex.prev || tex.prev.key !== key) {
+      $('#lblR').textContent = 'ENCODING ' + fmt + '…';
+      const r = await Pool.run({ op: 'preview', rgba: tex.rgba, w: tex.w, h: tex.h, fmt, hq: opts.quality === 'high' });
+      tex.prev = { key, rgba: r.rgba, psnr: r.psnr };
+      if (token !== renderToken) return;
+    }
+    rgba = tex.prev.rgba;
+    extra = isFinite(tex.prev.psnr) ? ` · PSNR ${tex.prev.psnr.toFixed(1)} DB` : ' · LOSSLESS';
+  }
+  let data;
+  const ch = { r: 0, g: 1, b: 2, a: 3 }[view.chan];
+  if (view.chan === 'rgba') data = new Uint8ClampedArray(rgba.buffer, rgba.byteOffset, rgba.length);
+  else {
+    data = new Uint8ClampedArray(rgba.length);
+    for (let i = 0; i < rgba.length; i += 4) {
+      if (view.chan === 'rgb') { data[i] = rgba[i]; data[i + 1] = rgba[i + 1]; data[i + 2] = rgba[i + 2]; }
+      else data[i] = data[i + 1] = data[i + 2] = rgba[i + ch];
+      data[i + 3] = 255;
+    }
+  }
+  if (art.width !== tex.w || art.height !== tex.h) { art.width = tex.w; art.height = tex.h; }
+  actx.putImageData(new ImageData(data, tex.w, tex.h), 0, 0);
+  art.hidden = false; $('#empty').hidden = true;
+  $('#lblL').textContent = `${cur.id.toUpperCase()}${fmt ? ' · ' + fmt : ''}${encoded ? ' · ENCODED' : ''}`;
+  $('#lblR').textContent = `${tex.w} × ${tex.h} · ${tex.meta.fmt.toUpperCase()}${extra}`;
+  $('#lblR').classList.toggle('hot', encoded);
+  const vk = state.sel + '|' + tex.w + 'x' + tex.h;
+  if (view.key !== vk) { view.key = vk; view.w = tex.w; view.h = tex.h; fit(); }
+}
+function apply() {
+  art.style.transform = `translate(${view.x}px,${view.y}px) scale(${view.z})`;
+  art.classList.toggle('px', view.z >= 2);
+  $('#zoomLbl').textContent = view.w ? Math.round(view.z * 100) + '%' : '';
+}
+function fit() {
+  if (!view.w) return;
+  const r = stage.getBoundingClientRect();
+  view.z = Math.min((r.width - 40) / view.w, (r.height - 70) / view.h, 4);
+  view.x = (r.width - view.w * view.z) / 2; view.y = (r.height - 30 - view.h * view.z) / 2;
+  apply();
+}
+stage.addEventListener('wheel', e => {
+  if (art.hidden) return;
+  e.preventDefault();
+  const r = stage.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+  const nz = Math.min(64, Math.max(0.02, view.z * Math.exp(-e.deltaY * 0.0015)));
+  view.x = mx - (mx - view.x) * nz / view.z; view.y = my - (my - view.y) * nz / view.z; view.z = nz;
+  apply();
+}, { passive: false });
+let pan = null;
+stage.addEventListener('pointerdown', e => { if (art.hidden || e.button !== 0) return; pan = { x: e.clientX, y: e.clientY }; stage.setPointerCapture(e.pointerId); stage.classList.add('panning'); });
+stage.addEventListener('pointermove', e => { if (!pan) return; view.x += e.clientX - pan.x; view.y += e.clientY - pan.y; pan = { x: e.clientX, y: e.clientY }; apply(); });
+const endPan = () => { pan = null; stage.classList.remove('panning'); };
+stage.addEventListener('pointerup', endPan); stage.addEventListener('pointercancel', endPan);
+stage.addEventListener('dblclick', fit);
+$('#btnFit').onclick = fit;
+addEventListener('resize', () => { if (view.w) fit(); });
+
+function bindSeg(sel, get, set) {
+  const seg = $(sel);
+  const sync = () => $$(sel + ' button').forEach(b => b.classList.toggle('on', b.dataset.v === get()));
+  seg.addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return; set(b.dataset.v); sync(); });
+  sync();
+}
+bindSeg('#segChan', () => view.chan, v => { view.chan = v; renderView(); });
+bindSeg('#segSrc', () => view.src, v => { view.src = v; renderView(); });
+bindSeg('#segQuality', () => opts.quality, v => { opts.quality = v; saveOpts(); renderView(); });
+bindSeg('#segExtract', () => opts.extract, v => { opts.extract = v; saveOpts(); });
+
+/* ---------------- options ---------------- */
+for (const [id, key] of [['#optMips', 'mips'], ['#optGamma', 'gamma'], ['#optKeep', 'keep'], ['#optAsk', 'ask'], ['#optRgba', 'rgba']]) {
+  const el = $(id); el.checked = !!opts[key];
+  el.onchange = () => { opts[key] = el.checked; saveOpts(); };
+}
+if (!canPick) { $('#optAsk').checked = false; $('#optAsk').disabled = true; }
+$('#optName').value = opts.name;
+$('#optName').oninput = e => { opts.name = e.target.value; saveOpts(); };
+$$('.tab').forEach(t => t.onclick = () => {
+  $$('.tab').forEach(x => x.classList.toggle('on', x === t));
+  $$('.pane').forEach(p => p.classList.toggle('on', p.id === 'pane-' + t.dataset.tab));
+});
+$('#refTable').innerHTML = SLOTS.map(s => `<tr><td>${s.id}</td><td>${s.fmt}</td><td>${s.what}</td></tr>`).join('');
+
+/* ---------------- export ---------------- */
+function ddsTask(id, tex) {
+  const d = SLOT[id], fmt = fmtOf(id);
+  if (opts.keep && tex.bytes && tex.meta.legacy && tex.meta.fmt === fmt && (tex.meta.mips > 1 || !opts.mips)) return Promise.resolve({ dds: tex.bytes, reused: true });
+  return Pool.run({ op: 'dds', rgba: tex.rgba, w: tex.w, h: tex.h, fmt, kind: d.kind, mips: opts.mips, gamma: opts.gamma, hq: opts.quality === 'high' });
+}
+async function exportSkin() {
+  const list = SLOTS.filter(s => s.kind !== 'icon' && state.slots[s.id]);
+  if (!list.length) return toast('Load at least one texture first.', true);
+  const icon = state.slots.Icon, t0 = performance.now();
+  busy.show('ENCODING DDS', list.length + (icon ? 1 : 0));
+  try {
+    let reused = 0;
+    const files = await Promise.all(list.map(s => ddsTask(s.id, state.slots[s.id]).then(r => {
+      busy.tick(`${s.id}.dds · ${fmtOf(s.id)}`); if (r.reused) reused++;
+      return { name: s.id + '.dds', data: r.dds };
+    })));
+    if (icon) { files.push({ name: 'Icon.tga', data: await Pool.run({ op: 'tga', rgba: icon.rgba, w: icon.w, h: icon.h, force: true }) }); busy.tick('Icon.tga'); }
+    $('#busyText').textContent = 'Packing zip…';
+    const zip = await makeZip(files), name = safeName(opts.name) + '.zip';
+    busy.hide();
+    const saved = await saveZip(zip, name, opts.ask);
+    if (saved) toast(`Saved ${saved} · ${files.length} files · ${(zip.size / 1048576).toFixed(1)} MB · ${((performance.now() - t0) / 1000).toFixed(1)} s` +
+      (reused ? `\n${reused} DDS reused as-is` : '') + (icon ? '' : '\nNo icon: add an Icon image to show it in the skin list'));
+  } catch (e) { busy.hide(); toast('Export failed: ' + e.message, true); }
+}
+async function extractAll(fmtChoice) {
+  const items = [...SLOTS.filter(s => state.slots[s.id]).map(s => ({ name: s.id, tex: state.slots[s.id] })),
+                 ...state.others.map(t => ({ name: stem(t.name), tex: t }))];
+  if (!items.length) return toast('Nothing loaded yet.', true);
+  const exts = fmtChoice === 'both' ? ['png', 'tga'] : [fmtChoice];
+  busy.show('CONVERTING', items.length * exts.length);
+  try {
+    const used = new Set(), files = [];
+    await Promise.all(items.flatMap(it => {
+      let n = it.name, k = 2; while (used.has(n.toLowerCase())) n = `${it.name}_${k++}`; used.add(n.toLowerCase());
+      return exts.map(ext => Pool.run({ op: ext, rgba: it.tex.rgba, w: it.tex.w, h: it.tex.h, force: opts.rgba })
+        .then(b => { files.push({ name: `${n}.${ext}`, data: b }); busy.tick(`${n}.${ext}`); }));
+    }));
+    files.sort((a, b) => a.name.localeCompare(b.name));
+    const zip = await makeZip(files);
+    busy.hide();
+    download(zip, `${safeName(opts.name)}_${fmtChoice}.zip`);
+    toast(`${files.length} files extracted`);
+  } catch (e) { busy.hide(); toast('Extract failed: ' + e.message, true); }
+}
+async function downloadCurrent(kind) {
+  const cur = current(); if (!cur) return;
+  try {
+    let data, name;
+    if (kind === 'dds') { const r = await (state.sel.startsWith('slot:') ? ddsTask(cur.id, cur.tex) : null); data = r.dds; name = cur.id + '.dds'; }
+    else { data = await Pool.run({ op: kind, rgba: cur.tex.rgba, w: cur.tex.w, h: cur.tex.h, force: opts.rgba }); name = `${cur.id}.${kind}`; }
+    download(new Blob([data]), name);
+  } catch (e) { toast(e.message, true); }
+}
+$('#hdrSkin').onclick = $('#btnExport').onclick = exportSkin;
+$('#hdrPng').onclick = () => extractAll('png');
+$('#hdrTga').onclick = () => extractAll('tga');
+$('#btnExtract').onclick = () => extractAll(opts.extract);
+$('#dlPng').onclick = () => downloadCurrent('png');
+$('#dlTga').onclick = () => downloadCurrent('tga');
+$('#dlDds').onclick = () => downloadCurrent('dds');
+addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); if (!$('#hdrSkin').disabled) exportSkin(); }
+  else if (e.key === 'f' && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) fit();
+});
+
+renderSlots();
+renderView();
+Pool.init();
+</script>
+</body>
+</html>
