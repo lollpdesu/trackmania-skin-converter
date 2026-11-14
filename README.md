@@ -11,7 +11,10 @@ losslessly as PNG or TGA to edit them.
 
 ## Usage
 
-1. Download [`skin_converter.html`](skin_converter.html) and double-click it.
+**▶ Use it online: https://lollpdesu.github.io/trackmania-skin-converter/**
+(or download [`skin_converter.html`](skin_converter.html) and open it offline, it's the same file).
+
+1. Open the page.
 2. Drop your textures, a folder, or an existing skin `.zip` onto the window.
    Files are matched to slots by name (`Skin_B.png`, `MyCar_Details_N.tga`, ...).
    You can also drop a file directly onto a slot.
