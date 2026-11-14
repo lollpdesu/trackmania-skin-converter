@@ -81,5 +81,10 @@ UV maps, the 3D model and baked maps are in the official
 
 ## License
 
-[MIT](LICENSE). This is a fan-made tool, not affiliated with or endorsed by Ubisoft or Nadeo.
+The code is released under the [MIT](LICENSE) license.
+
+The title font is [Counter-Strike by SoJa](https://www.dafont.com/counter-strike.font),
+listed as 100% free on dafont.com. It is embedded in the page and not covered by the MIT license.
+
+This is a fan-made tool, not affiliated with or endorsed by Ubisoft or Nadeo.
 Trackmania is a trademark of Ubisoft Entertainment.
